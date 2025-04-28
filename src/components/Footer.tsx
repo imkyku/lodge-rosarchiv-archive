@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -10,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <h3 className="text-archive-gold font-playfair text-lg font-bold mb-4">
-              Великая Еврейская Масонская Ложа
+              Великая Жидомасонская Ложа
             </h3>
             <p className="text-sm">
               Цифровой архив документов в соответствии со стандартами РОСАРХИВ.
@@ -55,7 +54,7 @@ const Footer = () => {
         </div>
         
         <div className="mt-8 pt-8 border-t border-archive-navy/30 text-sm text-center">
-          <p>© {currentYear} Великая Еврейская Масонская Ложа - Все права защищены</p>
+          <p>© {currentYear} Великая Жидомасонская Ложа - Все права защищены</p>
         </div>
       </div>
     </footer>

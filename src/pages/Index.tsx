@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
@@ -19,7 +18,7 @@ const Index = () => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-playfair font-bold mb-6">
               <span className="text-archive-gold">Цифровой Архив</span>
               <br />
-              Великой Еврейской Масонской Ложи
+              Великой Жидомасонской Ложи
             </h1>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8">
               Исторические документы и материалы в соответствии со стандартами РОСАРХИВ
@@ -104,7 +103,7 @@ const Index = () => {
                   О Цифровом Архиве
                 </h2>
                 <p className="text-lg mb-4">
-                  Цифровой архив Великой Еврейской Масонской Ложи создан для сохранения и предоставления доступа к уникальным историческим документам, отражающим деятельность организации с 1875 года.
+                  Цифровой архив Великой Жидомасонской Ложи создан для сохранения и предоставления доступа к уникальным историческим документам, отражающим деятельность организации с 1875 года.
                 </p>
                 <p className="text-lg mb-6">
                   Все материалы организованы в соответствии со стандартами РОСАРХИВ и доступны авторизованным пользователям для ознакомления и исследования.
@@ -119,7 +118,7 @@ const Index = () => {
               
               <div className="bg-archive-paper paper-bg document-border p-10 rounded-lg">
                 <h3 className="text-2xl font-playfair font-bold text-archive-navy text-center mb-4">
-                  Великая Еврейская Масонская Ложа
+                  Великая Жидомасонская Ложа
                 </h3>
                 <p className="text-archive-navy mb-3">
                   Основана в 1875 году в Санкт-Петербурге.

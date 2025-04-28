@@ -23,7 +23,7 @@ const Navbar = () => {
             <Link to="/" className="flex items-center">
               <File className="h-8 w-8 text-archive-gold mr-2" />
               <span className="text-archive-gold font-playfair text-xl font-bold">
-                РОСАРХИВ
+                ВЖЛ
               </span>
             </Link>
           </div>
