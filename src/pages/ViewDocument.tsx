@@ -20,14 +20,14 @@ const ViewDocument = () => {
   const [loading, setLoading] = useState(true);
   const [activeDocument, setActiveDocument] = useState<Document | undefined>(undefined);
 
-  // Redirect if not authenticated
+  // Перенаправление если не авторизован
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate('/login');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  // Fetch case and documents
+  // Получение данных дела и документов
   useEffect(() => {
     if (fundId && inventoryId && caseId) {
       const caseData = getCase(fundId, inventoryId, caseId);
@@ -38,7 +38,7 @@ const ViewDocument = () => {
           setActiveDocument(caseData.documents[0]);
         }
       } else {
-        // Case not found
+        // Дело не найдено
         navigate('/dashboard');
       }
     }
