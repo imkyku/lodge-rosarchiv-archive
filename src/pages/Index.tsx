@@ -70,7 +70,7 @@ const Index = () => {
                   </div>
                 </div>
                 <h3 className="text-xl font-playfair font-bold text-archive-navy mb-2">
-                  Удобный поиск
+                   Поисковая система
                 </h3>
                 <p className="text-archive-navy/80">
                   Быстрый поиск по всему архиву с использованием различных критериев и фильтров
