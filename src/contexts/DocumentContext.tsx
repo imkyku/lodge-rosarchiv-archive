@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from './AuthContext';
+import { DocumentAttachment } from '@/utils/documentTypes';
 
 // Document types
 export interface DocumentMetadata {
@@ -19,6 +20,8 @@ export interface DocumentMetadata {
 export interface DocumentContent {
   text: string;
   imageUrls?: string[];
+  attachments?: DocumentAttachment[];
+  barcode?: string;
 }
 
 export interface DocumentFull {
@@ -220,9 +223,19 @@ export const DocumentProvider: React.FC<DocumentProviderProps> = ({ children }) 
       
       allMetadata[documentIndex].updatedAt = new Date().toISOString();
       
-      // Update content if provided
+      // If there's content update
       if (updates.content) {
-        saveDocumentContent(id, updates.content);
+        // Get existing content first to merge with updates
+        const existingContent = getDocumentContentById(id) || { text: '' };
+        
+        // Merge existing content with updates
+        const updatedContent: DocumentContent = {
+          ...existingContent,
+          ...updates.content,
+        };
+        
+        // Save merged content
+        saveDocumentContent(id, updatedContent);
       }
       
       // Save updated metadata

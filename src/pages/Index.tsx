@@ -1,11 +1,25 @@
+
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { File, Search, ListTree } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const isMobile = useIsMobile();
+
+  const handleNavigation = (path: string) => {
+    if (isAuthenticated && (path === '/login' || path === '/register')) {
+      navigate('/dashboard');
+    } else {
+      navigate(path);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -15,25 +29,25 @@ const Index = () => {
         {/* Hero section */}
         <section className="bg-archive-navy text-white py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-playfair font-bold mb-6">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-playfair font-bold mb-6">
               <span className="text-archive-gold">Цифровой Архив</span>
               <br />
               Великой Жидомасонской Ложи
             </h1>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-8">
+            <p className="text-lg md:text-2xl max-w-3xl mx-auto mb-8">
               Исторические документы и материалы о делах Ложи на территории России
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
-                onClick={() => navigate('/login')}
-                className="bg-archive-gold hover:bg-archive-gold/80 text-archive-navy text-lg px-8 py-6"
+                onClick={() => handleNavigation('/login')}
+                className="bg-archive-gold hover:bg-archive-gold/80 text-archive-navy text-lg px-6 py-4 md:px-8 md:py-6"
               >
                 Войти в архив
               </Button>
               <Button 
-                onClick={() => navigate('/register')}
+                onClick={() => handleNavigation('/register')}
                 variant="outline"
-                className="border-archive-gold text-archive-gold hover:bg-archive-gold/10 text-lg px-8 py-6"
+                className="border-archive-gold text-archive-gold hover:bg-archive-gold/10 text-lg px-6 py-4 md:px-8 md:py-6"
               >
                 Регистрация
               </Button>
@@ -109,14 +123,14 @@ const Index = () => {
                   Все материалы удобно организованы доступны авторизованным пользователям для ознакомления и исследования.
                 </p>
                 <Button 
-                  onClick={() => navigate('/register')}
+                  onClick={() => handleNavigation('/register')}
                   className="bg-archive-navy hover:bg-archive-navy/80 text-white"
                 >
                   Начать работу с архивом
                 </Button>
               </div>
               
-              <div className="bg-archive-paper paper-bg document-border p-10 rounded-lg">
+              <div className="bg-archive-paper paper-bg document-border p-6 md:p-10 rounded-lg">
                 <h3 className="text-2xl font-playfair font-bold text-archive-navy text-center mb-4">
                   Великая Жидомасонская Ложа
                 </h3>
