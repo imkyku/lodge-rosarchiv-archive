@@ -2,10 +2,11 @@
 // Document attachment type
 export interface DocumentAttachment {
   name: string;
+  fileName: string;      // ← добавили
   description?: string;
   url: string;
-  type: string; // MIME type (e.g. image/jpeg, application/pdf)
-  size?: number; // File size in bytes
+  type: string;
+  size?: number;
 }
 
 // Document barcode type
