@@ -1,6 +1,6 @@
 import { DocumentAttachment } from './documentTypes';
 
-// Define interfaces for mock data
+/** Интерфейсы данных */
 export interface Fund {
   id: string;
   name: string;
@@ -45,7 +45,7 @@ export interface Document {
   attachments?: DocumentAttachment[];
 }
 
-// Mock data for Funds
+/** Моковые данные фондов */
 export const mockFunds: Fund[] = [
   {
     id: 'fund1',
@@ -210,15 +210,18 @@ export const mockFunds: Fund[] = [
   },
 ];
 
-
-// Function to get a specific case
-export const getCase = (fundId: string, inventoryId: string, caseId: string): Case | undefined => {
+/** Получить конкретное дело */
+export const getCase = (
+  fundId: string,
+  inventoryId: string,
+  caseId: string
+): Case | undefined => {
   const fund = mockFunds.find((f) => f.id === fundId);
-  if (fund) {
-    const inventory = fund.inventories.find((i) => i.id === inventoryId);
-    if (inventory) {
-      return inventory.cases.find((c) => c.id === caseId);
-    }
-  }
-  return undefined;
+  const inventory = fund?.inventories.find((i) => i.id === inventoryId);
+  return inventory?.cases.find((c) => c.id === caseId);
+};
+
+/** Получить фонд по id */
+export const getFund = (fundId: string): Fund | undefined => {
+  return mockFunds.find((f) => f.id === fundId);
 };
