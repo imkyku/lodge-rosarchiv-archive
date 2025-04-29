@@ -16,6 +16,7 @@ import { Fund, Inventory, Case } from '@/utils/mockData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { DocumentAttachment } from '@/utils/documentTypes';
+const { funds, addDocumentToCase } = useArchive();
 import { toast } from 'sonner';
 
 const DocumentManagement = () => {
@@ -140,7 +141,8 @@ const DocumentManagement = () => {
     }
     
     try {
-      await createDocument(
+      
+      const documentId = await createDocument(
         title,
         description,
         selectedFundId,
@@ -152,6 +154,21 @@ const DocumentManagement = () => {
           barcode: barcode || undefined
         }
       );
+
+      const metadata = {
+        id: documentId,
+        title,
+        description,
+        fundId: selectedFundId,
+        inventoryId: selectedInventoryId,
+        caseId: selectedCaseId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: user?.id || "unknown"
+      };
+
+      addDocumentToCase(selectedFundId, selectedInventoryId, selectedCaseId, metadata);
+
       addDocumentToCase(
         selectedFundId,
         selectedInventoryId,
