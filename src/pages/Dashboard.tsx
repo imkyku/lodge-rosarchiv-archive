@@ -50,7 +50,7 @@ const Dashboard = () => {
   return (
     <div>
       <Navbar />
-      <main className="p-4">
+      <main className="p-4 min-h-[calc(100vh-200px)]">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="browse">Обзор</TabsTrigger>
