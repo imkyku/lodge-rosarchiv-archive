@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
-import { File, Search, Settings } from "lucide-react";
+import { File, Search, Settings, Users, FileText } from "lucide-react";
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -14,6 +14,8 @@ const Navbar = () => {
     logout();
     navigate('/');
   };
+
+  const isAdminOrHigher = user?.role === 'owner' || user?.role === 'admin' || user?.role === 'archivist';
 
   return (
     <nav className="bg-archive-navy text-white">
@@ -46,8 +48,27 @@ const Navbar = () => {
                   >
                     Архив
                   </Link>
+                  
+                  {isAdminOrHigher && (
+                    <Link 
+                      to="/admin" 
+                      className="text-archive-cream hover:text-archive-gold px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      <span className="flex items-center">
+                        <Settings className="h-4 w-4 mr-1" />
+                        Управление
+                      </span>
+                    </Link>
+                  )}
+                  
                   <div className="flex items-center ml-4">
-                    <span className="text-archive-gold mr-2">{user?.name}</span>
+                    <span className="text-archive-gold mr-2">
+                      {user?.name} 
+                      {user?.role === 'owner' && " (Владелец)"}
+                      {user?.role === 'admin' && " (Администратор)"}
+                      {user?.role === 'archivist' && " (Архивариус)"}
+                      {user?.role === 'reader' && " (Читатель)"}
+                    </span>
                     <Button 
                       onClick={handleLogout}
                       variant="outline" 
@@ -136,8 +157,28 @@ const Navbar = () => {
               >
                 Архив
               </Link>
+              
+              {isAdminOrHigher && (
+                <Link
+                  to="/admin"
+                  className="block text-archive-cream hover:bg-archive-navy/70 hover:text-white px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="flex items-center">
+                    <Settings className="h-4 w-4 mr-1" />
+                    Управление
+                  </span>
+                </Link>
+              )}
+              
               <div className="px-3 py-2">
-                <span className="block text-archive-gold mb-2">{user?.name}</span>
+                <span className="block text-archive-gold mb-2">
+                  {user?.name}
+                  {user?.role === 'owner' && " (Владелец)"}
+                  {user?.role === 'admin' && " (Администратор)"}
+                  {user?.role === 'archivist' && " (Архивариус)"}
+                  {user?.role === 'reader' && " (Читатель)"}
+                </span>
                 <Button 
                   onClick={() => {
                     handleLogout();
