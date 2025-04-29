@@ -2,6 +2,7 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 // ArchiveContext is not available, replace with fallback or skip context usage
 import { Button } from "@/components/ui/button";
+import { useArchive } from '@/contexts/ArchiveContext';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, X, Search, Barcode } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocuments, DocumentMetadata } from '@/contexts/DocumentContext';
-import { mockFunds, Fund, Inventory, Case } from '@/utils/mockData';
+import { Fund, Inventory, Case } from '@/utils/mockData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { DocumentAttachment } from '@/utils/documentTypes';
@@ -52,13 +53,13 @@ const DocumentManagement = () => {
   
   useEffect(() => {
     // Load all available funds
-    setAvailableFunds(mockFunds);
+    setAvailableFunds(funds);
   }, []);
   
   useEffect(() => {
     // Update inventories when fund changes
     if (selectedFundId) {
-      const fund = mockFunds.find(f => f.id === selectedFundId);
+      const fund = funds.find(f => f.id === selectedFundId);
       if (fund) {
         setAvailableInventories(fund.inventories);
         setSelectedInventoryId('');
@@ -72,7 +73,7 @@ const DocumentManagement = () => {
   useEffect(() => {
     // Update cases when inventory changes
     if (selectedFundId && selectedInventoryId) {
-      const fund = mockFunds.find(f => f.id === selectedFundId);
+      const fund = funds.find(f => f.id === selectedFundId);
       if (fund) {
         const inventory = fund.inventories.find(i => i.id === selectedInventoryId);
         if (inventory) {
@@ -477,7 +478,7 @@ const DocumentManagement = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayDocuments.map((document) => {
-            const fund = mockFunds.find(f => f.id === document.fundId);
+            const fund = funds.find(f => f.id === document.fundId);
             const inventory = fund?.inventories.find(i => i.id === document.inventoryId);
             const archiveCase = inventory?.cases.find(c => c.id === document.caseId);
             const fullDocument = useDocuments().getDocumentById(document.id);
