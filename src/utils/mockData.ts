@@ -1,13 +1,11 @@
 import { DocumentAttachment } from './documentTypes';
 
-/** Интерфейсы данных */
+// Define interfaces for mock data
 export interface Fund {
   id: string;
   name: string;
   description: string;
-  number: string;
-  startYear: string;
-  endYear: string;
+  year: string;
   inventories: Inventory[];
 }
 
@@ -15,9 +13,7 @@ export interface Inventory {
   id: string;
   title: string;
   description: string;
-  number: string;
-  startYear: string;
-  endYear: string;
+  year: string;
   cases: Case[];
 }
 
@@ -45,161 +41,41 @@ export interface Document {
   attachments?: DocumentAttachment[];
 }
 
-/** Моковые данные фондов */
+// Mock data for Funds (стандартные данные удалены)
 export const mockFunds: Fund[] = [
+  // Пример фонда, который ты можешь редактировать
   {
     id: 'fund1',
-    name: 'Фонд №123',
-    description: 'Описание фонда №123',
-    number: '123',
-    startYear: '2019',
-    endYear: '2021',
+    name: 'Фонд A',
+    description: 'Описание фонда A',
+    year: '2023',
     inventories: [
       {
         id: 'inventory1',
-        title: 'Опись №1',
-        description: 'Описание описи №1',
-        number: '1',
-        startYear: '2019',
-        endYear: '2020',
+        title: 'Опись A1',
+        description: 'Описание описи A1',
+        year: '2023',
         cases: [
           {
             id: 'case1',
-            title: 'Дело №1',
-            description: 'Описание дела №1',
+            title: 'Дело A1',
+            description: 'Описание дела A1',
             number: '1',
-            year: '2020',
+            year: '2023',
             documents: [
               {
                 id: 'doc1',
-                title: 'Документ №1',
-                description: 'Описание документа №1',
-                date: '01.01.2020',
+                title: 'Документ A1',
+                description: 'Описание документа A1',
+                date: '01.01.2023',
                 language: 'Русский',
                 pages: 10,
                 condition: 'Отличное',
                 location: 'Полка 1, шкаф 1',
-                tags: ['важный', 'исторический'],
-                content: [
-                  'Это первый параграф документа №1.',
-                  'Это второй параграф документа №1.',
-                ],
-              },
-              {
-                id: 'doc2',
-                title: 'Документ №2',
-                description: 'Описание документа №2',
-                date: '02.01.2020',
-                language: 'Русский',
-                pages: 20,
-                condition: 'Хорошее',
-                location: 'Полка 2, шкаф 1',
-                tags: ['важный', 'секретный'],
-                content: [
-                  'Это первый параграф документа №2.',
-                  'Это второй параграф документа №2.',
-                ],
-              },
-            ],
-          },
-          {
-            id: 'case2',
-            title: 'Дело №2',
-            description: 'Описание дела №2',
-            number: '2',
-            year: '2020',
-            documents: [
-              {
-                id: 'doc3',
-                title: 'Документ №3',
-                description: 'Описание документа №3',
-                date: '03.01.2020',
-                language: 'Русский',
-                pages: 30,
-                condition: 'Удовлетворительное',
-                location: 'Полка 3, шкаф 1',
-                tags: ['обычный'],
-                content: [
-                  'Это первый параграф документа №3.',
-                  'Это второй параграф документа №3.',
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'inventory2',
-        title: 'Опись №2',
-        description: 'Описание описи №2',
-        number: '2',
-        startYear: '2020',
-        endYear: '2021',
-        cases: [
-          {
-            id: 'case3',
-            title: 'Дело №3',
-            description: 'Описание дела №3',
-            number: '3',
-            year: '2021',
-            documents: [
-              {
-                id: 'doc4',
-                title: 'Документ №4',
-                description: 'Описание документа №4',
-                date: '04.01.2021',
-                language: 'Русский',
-                pages: 40,
-                condition: 'Отличное',
-                location: 'Полка 4, шкаф 1',
                 tags: ['важный'],
                 content: [
-                  'Это первый параграф документа №4.',
-                  'Это второй параграф документа №4.',
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'fund2',
-    name: 'Фонд №456',
-    description: 'Описание фонда №456',
-    number: '456',
-    startYear: '2020',
-    endYear: '2022',
-    inventories: [
-      {
-        id: 'inventory3',
-        title: 'Опись №3',
-        description: 'Описание описи №3',
-        number: '3',
-        startYear: '2021',
-        endYear: '2022',
-        cases: [
-          {
-            id: 'case4',
-            title: 'Дело №4',
-            description: 'Описание дела №4',
-            number: '4',
-            year: '2021',
-            documents: [
-              {
-                id: 'doc5',
-                title: 'Документ №5',
-                description: 'Описание документа №5',
-                date: '05.01.2021',
-                language: 'Русский',
-                pages: 50,
-                condition: 'Хорошее',
-                location: 'Полка 5, шкаф 1',
-                tags: ['секретный'],
-                content: [
-                  'Это первый параграф документа №5.',
-                  'Это второй параграф документа №5.',
+                  'Это первый параграф документа A1.',
+                  'Это второй параграф документа A1.',
                 ],
               },
             ],
@@ -210,18 +86,41 @@ export const mockFunds: Fund[] = [
   },
 ];
 
-/** Получить конкретное дело */
-export const getCase = (
-  fundId: string,
-  inventoryId: string,
-  caseId: string
-): Case | undefined => {
-  const fund = mockFunds.find((f) => f.id === fundId);
-  const inventory = fund?.inventories.find((i) => i.id === inventoryId);
-  return inventory?.cases.find((c) => c.id === caseId);
+// Function to get a specific fund by id
+export const getFund = (id: string): Fund | undefined => {
+  return mockFunds.find((fund) => fund.id === id);
 };
 
-/** Получить фонд по id */
-export const getFund = (fundId: string): Fund | undefined => {
-  return mockFunds.find((f) => f.id === fundId);
+// Function to update a specific fund
+export const updateFund = (updatedFund: Fund) => {
+  const fundIndex = mockFunds.findIndex((fund) => fund.id === updatedFund.id);
+  if (fundIndex !== -1) {
+    mockFunds[fundIndex] = updatedFund;
+  }
+};
+
+// Function to get a specific case
+export const getCase = (fundId: string, inventoryId: string, caseId: string): Case | undefined => {
+  const fund = mockFunds.find((f) => f.id === fundId);
+  if (fund) {
+    const inventory = fund.inventories.find((i) => i.id === inventoryId);
+    if (inventory) {
+      return inventory.cases.find((c) => c.id === caseId);
+    }
+  }
+  return undefined;
+};
+
+// Function to update a specific case
+export const updateCase = (fundId: string, inventoryId: string, updatedCase: Case) => {
+  const fund = mockFunds.find((f) => f.id === fundId);
+  if (fund) {
+    const inventory = fund.inventories.find((i) => i.id === inventoryId);
+    if (inventory) {
+      const caseIndex = inventory.cases.findIndex((c) => c.id === updatedCase.id);
+      if (caseIndex !== -1) {
+        inventory.cases[caseIndex] = updatedCase;
+      }
+    }
+  }
 };
