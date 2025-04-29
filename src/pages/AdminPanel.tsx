@@ -8,6 +8,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import UserManagement from '@/components/UserManagement';
 import DocumentManagement from '@/components/DocumentManagement';
+import ArchiveManagement from '@/components/ArchiveManagement';
+import { ArchiveProvider } from '@/contexts/ArchiveContext';
 
 const AdminPanel = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -36,44 +38,55 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow bg-archive-cream py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-10">
-            <h1 className="text-3xl font-playfair font-bold text-archive-navy mb-6">
-              Панель управления
-            </h1>
-            
-            <Card className="bg-white shadow-md rounded-lg overflow-hidden">
-              <CardContent className="p-6">
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="mb-6">
+    <ArchiveProvider>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        
+        <main className="flex-grow bg-archive-cream py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-10">
+              <h1 className="text-3xl font-playfair font-bold text-archive-navy mb-6">
+                Панель управления
+              </h1>
+              
+              <Card className="bg-white shadow-md rounded-lg overflow-hidden">
+                <CardContent className="p-6">
+                  <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="mb-6">
+                      {(user?.role === 'owner' || user?.role === 'admin') && (
+                        <TabsTrigger value="users">Управление пользователями</TabsTrigger>
+                      )}
+                      <TabsTrigger value="documents">Управление документами</TabsTrigger>
+                      {(user?.role === 'owner' || user?.role === 'admin') && (
+                        <TabsTrigger value="archive">Управление архивом</TabsTrigger>
+                      )}
+                    </TabsList>
+                    
                     {(user?.role === 'owner' || user?.role === 'admin') && (
-                      <TabsTrigger value="users">Управление пользователями</TabsTrigger>
+                      <TabsContent value="users" className="space-y-6">
+                        <UserManagement />
+                      </TabsContent>
                     )}
-                    <TabsTrigger value="documents">Управление документами</TabsTrigger>
-                  </TabsList>
-                  
-                  {(user?.role === 'owner' || user?.role === 'admin') && (
-                    <TabsContent value="users" className="space-y-6">
-                      <UserManagement />
+                    
+                    <TabsContent value="documents" className="space-y-6">
+                      <DocumentManagement />
                     </TabsContent>
-                  )}
-                  
-                  <TabsContent value="documents" className="space-y-6">
-                    <DocumentManagement />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                    
+                    {(user?.role === 'owner' || user?.role === 'admin') && (
+                      <TabsContent value="archive" className="space-y-6">
+                        <ArchiveManagement />
+                      </TabsContent>
+                    )}
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
-      </main>
-      
-      <Footer />
-    </div>
+        </main>
+        
+        <Footer />
+      </div>
+    </ArchiveProvider>
   );
 };
 
