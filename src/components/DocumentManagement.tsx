@@ -152,6 +152,21 @@ const DocumentManagement = () => {
           barcode: barcode || undefined
         }
       );
+      addDocumentToCase(
+        selectedFundId,
+        selectedInventoryId,
+        selectedCaseId,
+        {
+          id: Math.random().toString(), // временный ID, если у createDocument нет возврата
+          title,
+          description,
+          createdAt: new Date().toISOString(),
+          fundId: selectedFundId,
+          inventoryId: selectedInventoryId,
+          caseId: selectedCaseId
+        }
+      );
+    
       
       // Reset form
       setTitle('');

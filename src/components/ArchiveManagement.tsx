@@ -257,7 +257,22 @@ const ArchiveManagement: React.FC = () => {
   const canEdit = hasPermission('editDocument');
   const canDelete = hasPermission('deleteDocument');
 
-  return (
+  
+  const addDocumentToCase = (fundId: string, inventoryId: string, caseId: string, document: DocumentMetadata) => {
+    setArchive(prev => {
+      const updated = { ...prev };
+      const fund = updated.funds.find(f => f.id === fundId);
+      if (!fund) return prev;
+      const inventory = fund.inventories.find(i => i.id === inventoryId);
+      if (!inventory) return prev;
+      const targetCase = inventory.cases.find(c => c.id === caseId);
+      if (!targetCase) return prev;
+      targetCase.documents = targetCase.documents || [];
+      targetCase.documents.push(document);
+      return updated;
+    });
+  };
+return (
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
