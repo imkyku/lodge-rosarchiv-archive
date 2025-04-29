@@ -5,7 +5,9 @@ export interface Fund {
   id: string;
   name: string;
   description: string;
-  year: string;
+  number: string;
+  startYear: string;
+  endYear: string;
   inventories: Inventory[];
 }
 
@@ -13,7 +15,9 @@ export interface Inventory {
   id: string;
   title: string;
   description: string;
-  year: string;
+  number: string;
+  startYear: string;
+  endYear: string;
   cases: Case[];
 }
 
@@ -47,13 +51,17 @@ export const mockFunds: Fund[] = [
     id: 'fund1',
     name: 'Фонд №123',
     description: 'Описание фонда №123',
-    year: '2020',
+    number: '123',
+    startYear: '2019',
+    endYear: '2021',
     inventories: [
       {
         id: 'inventory1',
         title: 'Опись №1',
         description: 'Описание описи №1',
-        year: '2020',
+        number: '1',
+        startYear: '2019',
+        endYear: '2020',
         cases: [
           {
             id: 'case1',
@@ -124,7 +132,9 @@ export const mockFunds: Fund[] = [
         id: 'inventory2',
         title: 'Опись №2',
         description: 'Описание описи №2',
-        year: '2021',
+        number: '2',
+        startYear: '2020',
+        endYear: '2021',
         cases: [
           {
             id: 'case3',
@@ -158,13 +168,17 @@ export const mockFunds: Fund[] = [
     id: 'fund2',
     name: 'Фонд №456',
     description: 'Описание фонда №456',
-    year: '2021',
+    number: '456',
+    startYear: '2020',
+    endYear: '2022',
     inventories: [
       {
         id: 'inventory3',
         title: 'Опись №3',
         description: 'Описание описи №3',
-        year: '2021',
+        number: '3',
+        startYear: '2021',
+        endYear: '2022',
         cases: [
           {
             id: 'case4',
@@ -195,6 +209,7 @@ export const mockFunds: Fund[] = [
     ],
   },
 ];
+
 
 // Function to get a specific case
 export const getCase = (fundId: string, inventoryId: string, caseId: string): Case | undefined => {
