@@ -106,6 +106,7 @@ const DocumentManagement = () => {
         reader.onload = (event) => {
           if (event.target && event.target.result) {
             const newAttachment: DocumentAttachment = {
+      fileName: file.name,
               name: file.name,
               url: event.target.result as string,
               type: file.type,
