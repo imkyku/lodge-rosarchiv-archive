@@ -69,7 +69,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="search">
-            <SearchBar query={searchQuery} onChange={setSearchQuery} />
+            <SearchBar value={searchQuery} onChange={setSearchQuery} value={searchQuery} onChange={setSearchQuery} />
             {/* Здесь можно отобразить результаты поиска */}
           </TabsContent>
         </Tabs>

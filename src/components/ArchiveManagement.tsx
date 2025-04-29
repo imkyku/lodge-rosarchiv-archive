@@ -1,4 +1,11 @@
 
+type Fund = {
+  id: string;
+  title: string;
+  number: string;
+};
+
+
 import React, { useState } from 'react';
 import { useArchive } from '@/contexts/ArchiveContext';
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,6 @@
 
 import { Toaster } from "@/components/ui/toaster";
+import Footer from '@/components/Footer';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -26,7 +27,9 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
+      <div className="flex flex-col min-h-screen">
+                      <main className="flex-grow">
+          <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -35,7 +38,10 @@ const App = () => (
                 <Route path="/view/:fundId/:inventoryId/:caseId" element={<ViewDocument />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
+        </main>
+                    <Footer />
+      </div>
+    </BrowserRouter>
           </TooltipProvider>
         </ArchiveProvider>
       </DocumentProvider>
