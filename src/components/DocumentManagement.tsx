@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useContext }, { useState, useEffect, useRef } from 'react';
+// ArchiveContext is not available, replace with fallback or skip context usage
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +18,7 @@ import { DocumentAttachment } from '@/utils/documentTypes';
 import { toast } from 'sonner';
 
 const DocumentManagement = () => {
+  const { funds } = useArchive();
   const { user, hasPermission } = useAuth();
   const { createDocument, updateDocument, deleteDocument, getDocuments } = useDocuments();
   const isMobile = useIsMobile();
