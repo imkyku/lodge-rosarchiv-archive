@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -211,7 +210,7 @@ const DocumentManagement = () => {
                       <SelectContent>
                         {availableFunds.map((fund) => (
                           <SelectItem key={fund.id} value={fund.id}>
-                            {fund.title}
+                            {fund.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -301,7 +300,7 @@ const DocumentManagement = () => {
               <CardContent>
                 <p className="text-sm text-gray-600 mb-2">{document.description}</p>
                 <div className="text-xs text-gray-500">
-                  <p>Фонд: {fund?.title || document.fundId}</p>
+                  <p>Фонд: {fund?.name || document.fundId}</p>
                   <p>Опись: {inventory?.title || document.inventoryId}</p>
                   <p>Дело: {archiveCase?.title || document.caseId}</p>
                 </div>
