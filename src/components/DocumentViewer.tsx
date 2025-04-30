@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { FileText, FileImage, FilePdf, File } from 'lucide-react';
+import { FileText, FileImage, File } from 'lucide-react';
 import { DocumentAttachment } from '@/utils/documentTypes';
 
 type DocumentViewerProps = {
@@ -42,7 +42,7 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
       return (
         <div className="flex flex-col items-center">
           <div className="w-40 h-40 flex items-center justify-center bg-gray-100 rounded-md mb-2">
-            <FilePdf className="h-16 w-16 text-red-500" />
+            <File className="h-16 w-16 text-red-500" />
           </div>
           <span className="text-sm mt-1 text-center">{name}</span>
         </div>

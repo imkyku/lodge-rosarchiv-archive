@@ -1,6 +1,9 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { DocumentAttachment, DocumentContent } from '../utils/documentTypes';
+import { DocumentAttachment as DocumentAttachmentType, DocumentContent } from '../utils/documentTypes';
+
+// Export the DocumentAttachment type using the type from documentTypes.ts
+export type DocumentAttachment = DocumentAttachmentType;
 
 export type DocumentMetadata = {
   id: string;
