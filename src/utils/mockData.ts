@@ -1,19 +1,22 @@
-import { DocumentAttachment } from './documentTypes';
+
+import { DocumentAttachment } from '@/contexts/DocumentContext';
 
 // Define interfaces for mock data
 export interface Fund {
   id: string;
   name: string;
+  number: string;
   description: string;
-  year: string;
+  startYear: string;
+  endYear: string;
   inventories: Inventory[];
 }
 
 export interface Inventory {
   id: string;
   title: string;
+  number: string;
   description: string;
-  year: string;
   cases: Case[];
 }
 
@@ -47,14 +50,16 @@ export const mockFunds: Fund[] = [
   {
     id: 'fund1',
     name: 'Фонд A',
+    number: 'Ф.1',
     description: 'Описание фонда A',
-    year: '2023',
+    startYear: '1900',
+    endYear: '1950',
     inventories: [
       {
         id: 'inventory1',
         title: 'Опись A1',
+        number: 'Оп.1',
         description: 'Описание описи A1',
-        year: '2023',
         cases: [
           {
             id: 'case1',

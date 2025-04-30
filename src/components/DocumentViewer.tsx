@@ -1,3 +1,4 @@
+
 import { Document } from '@/utils/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -17,7 +18,6 @@ const DocumentViewer = ({ document }: DocumentViewerProps) => {
     if (type === 'image') {
       return <FileImage className="h-16 w-16 text-green-500 mb-2" />;
     } else if (type === 'pdf') {
-      // Используем FileText вместо FilePdf
       return <FileText className="h-16 w-16 text-red-500 mb-2" />;
     } else {
       return <FileText className="h-16 w-16 text-gray-500 mb-2" />;

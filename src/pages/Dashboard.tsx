@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,18 +59,19 @@ const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="browse">
-            <FundsList funds={funds} onSelectFund={setSelectedFundId} />
+            <FundsList funds={funds} onSelectFund={setSelectedFundId} selectedFundId={selectedFundId} />
             {currentFund && (
               <InventoryList
                 inventories={currentFund.inventories}
                 onSelectInventory={setSelectedInventoryId}
+                selectedInventoryId={selectedInventoryId}
               />
             )}
             {currentInventory && <CasesList cases={currentCases} />}
           </TabsContent>
 
           <TabsContent value="search">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} value={searchQuery} onChange={setSearchQuery} />
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
             {/* Здесь можно отобразить результаты поиска */}
           </TabsContent>
         </Tabs>
