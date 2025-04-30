@@ -1,19 +1,6 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-export type DocumentAttachment = {
-  fileName: string;
-  name: string;
-  url: string;
-  type: string;
-  size: number;
-};
-
-export type DocumentContent = {
-  text: string;
-  attachments?: DocumentAttachment[];
-  barcode?: string;
-};
+import { DocumentAttachment, DocumentContent } from '../utils/documentTypes';
 
 export type DocumentMetadata = {
   id: string;
@@ -35,6 +22,7 @@ export type FullDocument = {
 type DocumentContextType = {
   documents: DocumentMetadata[];
   getDocuments: () => DocumentMetadata[];
+  getDocumentsByCaseId: (fundId: string, inventoryId: string, caseId: string) => DocumentMetadata[];
   getDocumentById: (id: string) => FullDocument | undefined;
   createDocument: (
     title: string,
@@ -54,6 +42,17 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
   const [documents, setDocuments] = useState<FullDocument[]>([]);
 
   const getDocuments = () => documents.map(d => d.metadata);
+  
+  const getDocumentsByCaseId = (fundId: string, inventoryId: string, caseId: string) => {
+    return documents
+      .filter(d => 
+        d.metadata.fundId === fundId && 
+        d.metadata.inventoryId === inventoryId && 
+        d.metadata.caseId === caseId
+      )
+      .map(d => d.metadata);
+  };
+  
   const getDocumentById = (id: string) => documents.find(d => d.metadata.id === id);
 
   const createDocument = async (
@@ -83,11 +82,16 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
 
   const updateDocument = async (id: string, update: Partial<FullDocument>) => {
     setDocuments(prev =>
-      prev.map(doc =>
-        doc.metadata.id === id
-          ? { ...doc, ...update, metadata: { ...doc.metadata, ...update.metadata }, content: { ...doc.content, ...update.content } }
-          : doc
-      )
+      prev.map(doc => {
+        if (doc.metadata.id === id) {
+          return {
+            ...doc,
+            metadata: { ...doc.metadata, ...(update.metadata || {}) },
+            content: { ...doc.content, ...(update.content || {}) }
+          };
+        }
+        return doc;
+      })
     );
   };
 
@@ -97,7 +101,15 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <DocumentContext.Provider
-      value={{ documents: getDocuments(), getDocuments, getDocumentById, createDocument, updateDocument, deleteDocument }}
+      value={{ 
+        documents: getDocuments(), 
+        getDocuments, 
+        getDocumentsByCaseId,
+        getDocumentById, 
+        createDocument, 
+        updateDocument, 
+        deleteDocument 
+      }}
     >
       {children}
     </DocumentContext.Provider>

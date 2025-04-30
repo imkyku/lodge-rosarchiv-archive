@@ -1,58 +1,70 @@
 
-import { Case } from '@/utils/mockData';
-import { File } from 'lucide-react';
+import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 
 interface CasesListProps {
-  cases: Case[];
+  cases: Array<any>;
   fundId: string;
   inventoryId: string;
+  onSelectCase?: (caseId: string) => void;
+  selectedCaseId?: string;
 }
 
-const CasesList = ({ cases, fundId, inventoryId }: CasesListProps) => {
+const CasesList: React.FC<CasesListProps> = ({ 
+  cases, 
+  fundId, 
+  inventoryId,
+  onSelectCase,
+  selectedCaseId 
+}) => {
   const navigate = useNavigate();
 
-  const handleCaseClick = (caseId: string) => {
-    navigate(`/view/${fundId}/${inventoryId}/${caseId}`);
-  };
+  if (!cases || cases.length === 0) {
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Дела</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground">Нет доступных дел</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-playfair font-bold text-archive-navy">Дела</h2>
-      
-      {cases.length === 0 ? (
-        <p className="text-muted-foreground italic">Дела не найдены</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Дела</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {cases.map((archiveCase) => (
             <Card 
               key={archiveCase.id} 
-              className="cursor-pointer hover:shadow-md transition-shadow paper-bg"
-              onClick={() => handleCaseClick(archiveCase.id)}
+              className={`cursor-pointer transition-all hover:shadow-md ${
+                selectedCaseId === archiveCase.id ? 'border-primary bg-primary/5' : ''
+              }`}
+              onClick={() => onSelectCase && onSelectCase(archiveCase.id)}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <File className="h-5 w-5 mr-2 text-archive-navy" />
+              <CardContent className="p-4">
+                <div className="flex flex-col gap-2">
                   <div>
-                    <span className="font-bold">{archiveCase.number}</span>: {archiveCase.title}
+                    <p className="font-medium">{archiveCase.title}</p>
+                    <p className="text-sm text-muted-foreground">№{archiveCase.number}, {archiveCase.year}</p>
                   </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm">
-                  <p className="text-muted-foreground">{archiveCase.description}</p>
-                  <div className="flex justify-between mt-2">
-                    <span className="text-archive-navy">Год: {archiveCase.year}</span>
-                    <span className="text-archive-navy">Документов: {archiveCase.documents.length}</span>
-                  </div>
+                  {archiveCase.description && (
+                    <p className="text-sm">{archiveCase.description}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

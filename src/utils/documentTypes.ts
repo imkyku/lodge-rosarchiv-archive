@@ -6,7 +6,7 @@ export interface DocumentAttachment {
   description?: string;
   url: string;
   type: string;
-  size: number; // Теперь это обязательное поле
+  size: number;
 }
 
 // Document barcode type

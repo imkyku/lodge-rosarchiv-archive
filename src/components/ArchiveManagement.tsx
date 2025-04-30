@@ -1,14 +1,10 @@
-type Fund = {
-  id: string;
-  title: string;
-  number: string;
-};
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useArchive } from '@/contexts/ArchiveContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +28,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Accordion,
@@ -39,13 +36,22 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { toast } from "sonner";
 import { useAuth } from '@/contexts/AuthContext';
-import { DocumentMetadata } from '@/contexts/DocumentContext';
-import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { useDocuments, DocumentMetadata, FullDocument } from '@/contexts/DocumentContext';
+import { DocumentAttachment, DocumentContent } from '@/utils/documentTypes';
+import { PlusCircle, Pencil, Trash2, FileText, X, Search, Barcode } from 'lucide-react';
+
+type Fund = {
+  id: string;
+  title: string;
+  number: string;
+};
 
 const ArchiveManagement: React.FC = () => {
-  const { funds, createFund, updateFund, deleteFund, createInventory, updateInventory, deleteInventory, createCase, updateCase, deleteCase, addDocumentToCase } = useArchive();
-  const { hasPermission } = useAuth();
+  const { funds, createFund, updateFund, deleteFund, createInventory, updateInventory, deleteInventory, createCase, updateCase, deleteCase } = useArchive();
+  const { user, hasPermission } = useAuth();
+  const { getDocuments, getDocumentsByCaseId, getDocumentById, createDocument, updateDocument, deleteDocument } = useDocuments();
   
   // Fund states
   const [newFund, setNewFund] = useState({
@@ -101,6 +107,33 @@ const ArchiveManagement: React.FC = () => {
     description: string;
   } | null>(null);
   
+  // Document states
+  const [isCreateDocDialogOpen, setIsCreateDocDialogOpen] = useState(false);
+  const [isEditDocDialogOpen, setIsEditDocDialogOpen] = useState(false);
+  const [selectedCaseForDoc, setSelectedCaseForDoc] = useState<{
+    fundId: string;
+    inventoryId: string;
+    caseId: string;
+    caseTitle: string;
+  } | null>(null);
+  
+  // Document form state
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [content, setContent] = useState('');
+  const [barcode, setBarcode] = useState('');
+  const [attachments, setAttachments] = useState<DocumentAttachment[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentMetadata | null>(null);
+  
+  // Search by barcode
+  const [searchBarcode, setSearchBarcode] = useState('');
+  const [searchResults, setSearchResults] = useState<DocumentMetadata[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [expandedCase, setExpandedCase] = useState<string | null>(null);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+  
   // Dialog states
   const [openNewFundDialog, setOpenNewFundDialog] = useState(false);
   const [openEditFundDialog, setOpenEditFundDialog] = useState(false);
@@ -117,6 +150,170 @@ const ArchiveManagement: React.FC = () => {
     setEditingFund(null);
     setEditingInventory(null);
     setEditingCase(null);
+  };
+  
+  const resetDocumentForm = () => {
+    setTitle('');
+    setDescription('');
+    setContent('');
+    setBarcode('');
+    setAttachments([]);
+    setSelectedDocument(null);
+  };
+  
+  // Document management functions
+  const handleAttachmentUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newAttachments: DocumentAttachment[] = [];
+      
+      Array.from(e.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target && event.target.result) {
+            const newAttachment: DocumentAttachment = {
+              fileName: file.name,
+              name: file.name,
+              url: event.target.result as string,
+              type: file.type,
+              size: file.size
+            };
+            
+            if (isEdit) {
+              setAttachments(prev => [...prev, newAttachment]);
+            } else {
+              newAttachments.push(newAttachment);
+              if (newAttachments.length === Array.from(e.target.files as FileList).length) {
+                setAttachments(prev => [...prev, ...newAttachments]);
+              }
+            }
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+  
+  const removeAttachment = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
+  
+  const handleCreateDocument = async () => {
+    if (!title || !description || !content || !selectedCaseForDoc) {
+      toast.error('Пожалуйста, заполните все обязательные поля');
+      return;
+    }
+    
+    try {
+      await createDocument(
+        title,
+        description,
+        selectedCaseForDoc.fundId,
+        selectedCaseForDoc.inventoryId,
+        selectedCaseForDoc.caseId,
+        { 
+          text: content,
+          attachments: attachments.length > 0 ? attachments : undefined,
+          barcode: barcode || undefined
+        }
+      );
+      
+      setIsCreateDocDialogOpen(false);
+      resetDocumentForm();
+      toast.success('Документ успешно создан');
+    } catch (error) {
+      console.error('Failed to create document:', error);
+      toast.error('Не удалось создать документ');
+    }
+  };
+  
+  const handleUpdateDocument = async () => {
+    if (!selectedDocument || !title || !description || !content) {
+      toast.error('Пожалуйста, заполните все обязательные поля');
+      return;
+    }
+    
+    try {
+      await updateDocument(selectedDocument.id, {
+        metadata: {
+          title,
+          description,
+          id: selectedDocument.id,
+          fundId: selectedDocument.fundId,
+          inventoryId: selectedDocument.inventoryId,
+          caseId: selectedDocument.caseId,
+          createdAt: selectedDocument.createdAt,
+          updatedAt: new Date().toISOString(),
+          createdBy: selectedDocument.createdBy
+        },
+        content: { 
+          text: content,
+          attachments: attachments,
+          barcode: barcode || undefined
+        }
+      });
+      
+      setIsEditDocDialogOpen(false);
+      resetDocumentForm();
+      toast.success('Документ успешно обновлен');
+    } catch (error) {
+      console.error('Failed to update document:', error);
+      toast.error('Не удалось обновить документ');
+    }
+  };
+  
+  const openEditDialog = (document: DocumentMetadata) => {
+    setSelectedDocument(document);
+    
+    // Load document content
+    const fullDocument = getDocumentById(document.id);
+    if (fullDocument) {
+      setTitle(fullDocument.metadata.title);
+      setDescription(fullDocument.metadata.description);
+      setContent(fullDocument.content.text);
+      setBarcode(fullDocument.content.barcode || '');
+      setAttachments(fullDocument.content.attachments || []);
+      setIsEditDocDialogOpen(true);
+    }
+  };
+  
+  const handleDeleteDocument = async (id: string) => {
+    if (window.confirm('Вы действительно хотите удалить этот документ?')) {
+      try {
+        await deleteDocument(id);
+        toast.success('Документ успешно удален');
+      } catch (error) {
+        toast.error('Не удалось удалить документ');
+      }
+    }
+  };
+  
+  const handleSearchByBarcode = () => {
+    if (!searchBarcode.trim()) {
+      setIsSearching(false);
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    const allDocuments = getDocuments();
+    
+    // Search for documents with matching barcode
+    const results = allDocuments.filter(doc => {
+      const fullDoc = getDocumentById(doc.id);
+      return fullDoc && fullDoc.content.barcode === searchBarcode.trim();
+    });
+    
+    setSearchResults(results);
+  };
+  
+  const clearSearch = () => {
+    setSearchBarcode('');
+    setIsSearching(false);
+    setSearchResults([]);
+  };
+  
+  const showDocuments = (fundId: string, inventoryId: string, caseId: string) => {
+    setExpandedCase(expandedCase === caseId ? null : caseId);
   };
   
   // Create fund handler
@@ -255,7 +452,7 @@ const ArchiveManagement: React.FC = () => {
   // Check if user has edit permissions
   const canEdit = hasPermission('editDocument');
   const canDelete = hasPermission('deleteDocument');
-
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -263,92 +460,208 @@ const ArchiveManagement: React.FC = () => {
           <div>
             <CardTitle>Управление архивной структурой</CardTitle>
             <CardDescription>
-              Управляйте фондами, описями и делами архива
+              Управляйте фондами, описями, делами и документами архива
             </CardDescription>
           </div>
           
-          {canEdit && (
-            <Dialog open={openNewFundDialog} onOpenChange={setOpenNewFundDialog}>
-              <DialogTrigger asChild>
-                <Button className="ml-auto">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Новый фонд
+          <div className="flex flex-col sm:flex-row gap-4">
+            {isSearching ? (
+              <div className="flex items-center border rounded-md overflow-hidden p-1 bg-white">
+                <Input
+                  placeholder="Поиск по штрихкоду"
+                  value={searchBarcode}
+                  onChange={(e) => setSearchBarcode(e.target.value)}
+                  className="border-0 focus-visible:ring-0"
+                />
+                <Button 
+                  type="button"
+                  variant="ghost"
+                  onClick={handleSearchByBarcode}
+                  className="p-2"
+                >
+                  <Search className="h-4 w-4" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Добавить новый фонд</DialogTitle>
-                  <DialogDescription>
-                    Заполните информацию для создания нового архивного фонда
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <label htmlFor="fund-name">Название фонда</label>
-                    <Input
-                      id="fund-name"
-                      value={newFund.name}
-                      onChange={(e) => setNewFund({...newFund, name: e.target.value})}
-                      placeholder="Название фонда"
-                    />
-                  </div>
+                <Button 
+                  type="button"
+                  variant="ghost"
+                  onClick={clearSearch}
+                  className="p-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                onClick={() => setIsSearching(true)} 
+                className="flex items-center gap-2"
+              >
+                <Search className="h-4 w-4" />
+                <span>Найти по штрихкоду</span>
+              </Button>
+            )}
+            
+            {canEdit && (
+              <Dialog open={openNewFundDialog} onOpenChange={setOpenNewFundDialog}>
+                <DialogTrigger asChild>
+                  <Button className="ml-auto">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Новый фонд
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Добавить новый фонд</DialogTitle>
+                    <DialogDescription>
+                      Заполните информацию для создания нового архивного фонда
+                    </DialogDescription>
+                  </DialogHeader>
                   
-                  <div className="grid gap-2">
-                    <label htmlFor="fund-number">Номер фонда</label>
-                    <Input
-                      id="fund-number"
-                      value={newFund.number}
-                      onChange={(e) => setNewFund({...newFund, number: e.target.value})}
-                      placeholder="Ф.X"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <label htmlFor="start-year">Начальный год</label>
+                      <Label htmlFor="fund-name">Название фонда</Label>
                       <Input
-                        id="start-year"
-                        value={newFund.startYear}
-                        onChange={(e) => setNewFund({...newFund, startYear: e.target.value})}
-                        placeholder="1900"
+                        id="fund-name"
+                        value={newFund.name}
+                        onChange={(e) => setNewFund({...newFund, name: e.target.value})}
+                        placeholder="Название фонда"
                       />
                     </div>
                     
                     <div className="grid gap-2">
-                      <label htmlFor="end-year">Конечный год</label>
+                      <Label htmlFor="fund-number">Номер фонда</Label>
                       <Input
-                        id="end-year"
-                        value={newFund.endYear}
-                        onChange={(e) => setNewFund({...newFund, endYear: e.target.value})}
-                        placeholder="1950"
+                        id="fund-number"
+                        value={newFund.number}
+                        onChange={(e) => setNewFund({...newFund, number: e.target.value})}
+                        placeholder="Ф.X"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="start-year">Начальный год</Label>
+                        <Input
+                          id="start-year"
+                          value={newFund.startYear}
+                          onChange={(e) => setNewFund({...newFund, startYear: e.target.value})}
+                          placeholder="1900"
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="end-year">Конечный год</Label>
+                        <Input
+                          id="end-year"
+                          value={newFund.endYear}
+                          onChange={(e) => setNewFund({...newFund, endYear: e.target.value})}
+                          placeholder="1950"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="fund-description">Описание</Label>
+                      <Textarea
+                        id="fund-description"
+                        value={newFund.description}
+                        onChange={(e) => setNewFund({...newFund, description: e.target.value})}
+                        placeholder="Описание фонда"
+                        rows={3}
                       />
                     </div>
                   </div>
                   
-                  <div className="grid gap-2">
-                    <label htmlFor="fund-description">Описание</label>
-                    <Textarea
-                      id="fund-description"
-                      value={newFund.description}
-                      onChange={(e) => setNewFund({...newFund, description: e.target.value})}
-                      placeholder="Описание фонда"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpenNewFundDialog(false)}>Отмена</Button>
-                  <Button onClick={handleCreateFund}>Создать фонд</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setOpenNewFundDialog(false)}>Отмена</Button>
+                    <Button onClick={handleCreateFund}>Создать фонд</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </CardHeader>
         
         <CardContent>
-          {funds.length === 0 ? (
+          {isSearching && searchResults.length > 0 ? (
+            <div>
+              <h3 className="text-lg font-medium mb-4">Результаты поиска по штрихкоду "{searchBarcode}"</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {searchResults.map((document) => {
+                  const fund = funds.find(f => f.id === document.fundId);
+                  const inventory = fund?.inventories.find(i => i.id === document.inventoryId);
+                  const archiveCase = inventory?.cases.find(c => c.id === document.caseId);
+                  const fullDocument = getDocumentById(document.id);
+                  const hasAttachments = fullDocument?.content.attachments && fullDocument.content.attachments.length > 0;
+                  const documentBarcode = fullDocument?.content.barcode;
+                  
+                  return (
+                    <Card key={document.id}>
+                      <CardHeader>
+                        <CardTitle>{document.title}</CardTitle>
+                        <CardDescription>
+                          {new Date(document.createdAt).toLocaleDateString('ru-RU')}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-gray-600 mb-2">{document.description}</p>
+                        <div className="text-xs text-gray-500">
+                          <p>Фонд: {fund?.name || document.fundId}</p>
+                          <p>Опись: {inventory?.title || document.inventoryId}</p>
+                          <p>Дело: {archiveCase?.title || document.caseId}</p>
+                        </div>
+                        
+                        <div className="flex mt-3 gap-2 flex-wrap">
+                          {hasAttachments && (
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                              <FileText className="h-3 w-3 mr-1" /> Файлы: {fullDocument!.content.attachments!.length}
+                            </span>
+                          )}
+                          
+                          {documentBarcode && (
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700">
+                              <Barcode className="h-3 w-3 mr-1" /> {documentBarcode}
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-end gap-2">
+                        {canEdit && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => openEditDialog(document)}
+                          >
+                            Редактировать
+                          </Button>
+                        )}
+                        
+                        {canDelete && (
+                          <Button 
+                            variant="destructive" 
+                            onClick={() => handleDeleteDocument(document.id)}
+                          >
+                            Удалить
+                          </Button>
+                        )}
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Button onClick={clearSearch} variant="outline">
+                  Вернуться к управлению архивом
+                </Button>
+              </div>
+            </div>
+          ) : isSearching && searchResults.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg shadow text-center">
+              <p className="text-lg text-gray-700">Документы с штрихкодом "{searchBarcode}" не найдены</p>
+              <Button onClick={clearSearch} variant="outline" className="mt-4">
+                Сбросить поиск
+              </Button>
+            </div>
+          ) : funds.length === 0 ? (
             <p className="text-center py-6 text-muted-foreground">Нет доступных фондов</p>
           ) : (
             <Accordion type="multiple" className="w-full">
@@ -433,7 +746,7 @@ const ArchiveManagement: React.FC = () => {
                               
                               <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
-                                  <label htmlFor="inventory-title">Название описи</label>
+                                  <Label htmlFor="inventory-title">Название описи</Label>
                                   <Input
                                     id="inventory-title"
                                     value={newInventory.title}
@@ -443,7 +756,7 @@ const ArchiveManagement: React.FC = () => {
                                 </div>
                                 
                                 <div className="grid gap-2">
-                                  <label htmlFor="inventory-number">Номер описи</label>
+                                  <Label htmlFor="inventory-number">Номер описи</Label>
                                   <Input
                                     id="inventory-number"
                                     value={newInventory.number}
@@ -453,7 +766,7 @@ const ArchiveManagement: React.FC = () => {
                                 </div>
                                 
                                 <div className="grid gap-2">
-                                  <label htmlFor="inventory-description">Описание</label>
+                                  <Label htmlFor="inventory-description">Описание</Label>
                                   <Textarea
                                     id="inventory-description"
                                     value={newInventory.description}
@@ -555,7 +868,7 @@ const ArchiveManagement: React.FC = () => {
                                       
                                       <div className="grid gap-4 py-4">
                                         <div className="grid gap-2">
-                                          <label htmlFor="case-title">Название дела</label>
+                                          <Label htmlFor="case-title">Название дела</Label>
                                           <Input
                                             id="case-title"
                                             value={newCase.title}
@@ -565,7 +878,7 @@ const ArchiveManagement: React.FC = () => {
                                         </div>
                                         
                                         <div className="grid gap-2">
-                                          <label htmlFor="case-number">Номер дела</label>
+                                          <Label htmlFor="case-number">Номер дела</Label>
                                           <Input
                                             id="case-number"
                                             value={newCase.number}
@@ -575,7 +888,7 @@ const ArchiveManagement: React.FC = () => {
                                         </div>
                                         
                                         <div className="grid gap-2">
-                                          <label htmlFor="case-year">Год</label>
+                                          <Label htmlFor="case-year">Год</Label>
                                           <Input
                                             id="case-year"
                                             value={newCase.year}
@@ -585,7 +898,7 @@ const ArchiveManagement: React.FC = () => {
                                         </div>
                                         
                                         <div className="grid gap-2">
-                                          <label htmlFor="case-description">Описание</label>
+                                          <Label htmlFor="case-description">Описание</Label>
                                           <Textarea
                                             id="case-description"
                                             value={newCase.description}
@@ -608,68 +921,200 @@ const ArchiveManagement: React.FC = () => {
                               {inventory.cases.length === 0 ? (
                                 <p className="text-center py-3 text-xs text-muted-foreground">Нет дел в данной описи</p>
                               ) : (
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead className="w-12">№</TableHead>
-                                      <TableHead>Название</TableHead>
-                                      <TableHead className="w-24">Год</TableHead>
-                                      {canEdit && <TableHead className="w-20 text-right">Действия</TableHead>}
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {inventory.cases.map((archiveCase) => (
-                                      <TableRow key={archiveCase.id}>
-                                        <TableCell className="font-medium">{archiveCase.number}</TableCell>
-                                        <TableCell>
-                                          <div>
-                                            <div className="font-medium">{archiveCase.title}</div>
-                                            {archiveCase.description && (
-                                              <div className="text-xs text-muted-foreground">{archiveCase.description}</div>
-                                            )}
-                                          </div>
-                                        </TableCell>
-                                        <TableCell>{archiveCase.year}</TableCell>
-                                        {canEdit && (
-                                          <TableCell className="text-right">
-                                            <div className="flex justify-end">
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0"
-                                                onClick={() => {
-                                                  setEditingCase({
-                                                    fundId: fund.id,
-                                                    inventoryId: inventory.id,
-                                                    id: archiveCase.id,
-                                                    title: archiveCase.title,
-                                                    number: archiveCase.number,
-                                                    year: archiveCase.year,
-                                                    description: archiveCase.description
-                                                  });
-                                                  setOpenEditCaseDialog(true);
-                                                }}
-                                              >
-                                                <Pencil className="h-4 w-4" />
-                                              </Button>
-                                              
-                                              {canDelete && (
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  className="h-8 w-8 p-0 text-destructive"
-                                                  onClick={() => handleDeleteCase(fund.id, inventory.id, archiveCase.id)}
-                                                >
-                                                  <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                              )}
-                                            </div>
-                                          </TableCell>
-                                        )}
+                                <div className="space-y-4">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead className="w-12">№</TableHead>
+                                        <TableHead>Название</TableHead>
+                                        <TableHead className="w-24">Год</TableHead>
+                                        <TableHead className="w-40 text-right">Действия</TableHead>
                                       </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {inventory.cases.map((archiveCase) => {
+                                        const documents = getDocumentsByCaseId(fund.id, inventory.id, archiveCase.id);
+                                        const isExpanded = expandedCase === archiveCase.id;
+                                        
+                                        return (
+                                          <React.Fragment key={archiveCase.id}>
+                                            <TableRow>
+                                              <TableCell className="font-medium">{archiveCase.number}</TableCell>
+                                              <TableCell>
+                                                <div>
+                                                  <div className="font-medium">{archiveCase.title}</div>
+                                                  {archiveCase.description && (
+                                                    <div className="text-xs text-muted-foreground">{archiveCase.description}</div>
+                                                  )}
+                                                </div>
+                                              </TableCell>
+                                              <TableCell>{archiveCase.year}</TableCell>
+                                              <TableCell className="text-right">
+                                                <div className="flex justify-end space-x-2">
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8"
+                                                    onClick={() => showDocuments(fund.id, inventory.id, archiveCase.id)}
+                                                  >
+                                                    {isExpanded ? "Скрыть документы" : "Показать документы"}
+                                                  </Button>
+                                                  
+                                                  {canEdit && (
+                                                    <>
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={() => {
+                                                          setEditingCase({
+                                                            fundId: fund.id,
+                                                            inventoryId: inventory.id,
+                                                            id: archiveCase.id,
+                                                            title: archiveCase.title,
+                                                            number: archiveCase.number,
+                                                            year: archiveCase.year,
+                                                            description: archiveCase.description
+                                                          });
+                                                          setOpenEditCaseDialog(true);
+                                                        }}
+                                                      >
+                                                        <Pencil className="h-4 w-4" />
+                                                      </Button>
+                                                      
+                                                      {canDelete && (
+                                                        <Button
+                                                          variant="ghost"
+                                                          size="sm"
+                                                          className="h-8 w-8 p-0 text-destructive"
+                                                          onClick={() => handleDeleteCase(fund.id, inventory.id, archiveCase.id)}
+                                                        >
+                                                          <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                      )}
+                                                    </>
+                                                  )}
+                                                </div>
+                                              </TableCell>
+                                            </TableRow>
+                                            
+                                            {isExpanded && (
+                                              <TableRow>
+                                                <TableCell colSpan={4} className="p-0">
+                                                  <div className="bg-muted/20 p-4 space-y-4">
+                                                    <div className="flex justify-between items-center">
+                                                      <h5 className="font-medium">Документы в деле</h5>
+                                                      
+                                                      {canEdit && (
+                                                        <Button
+                                                          size="sm"
+                                                          onClick={() => {
+                                                            setSelectedCaseForDoc({
+                                                              fundId: fund.id,
+                                                              inventoryId: inventory.id,
+                                                              caseId: archiveCase.id,
+                                                              caseTitle: archiveCase.title
+                                                            });
+                                                            setIsCreateDocDialogOpen(true);
+                                                          }}
+                                                        >
+                                                          <PlusCircle className="mr-2 h-4 w-4" />
+                                                          Добавить документ
+                                                        </Button>
+                                                      )}
+                                                    </div>
+                                                    
+                                                    {documents.length === 0 ? (
+                                                      <p className="text-center py-3 text-sm text-muted-foreground">
+                                                        В данном деле нет документов
+                                                      </p>
+                                                    ) : (
+                                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {documents.map((document) => {
+                                                          const fullDocument = getDocumentById(document.id);
+                                                          const hasAttachments = fullDocument?.content.attachments && 
+                                                                                fullDocument.content.attachments.length > 0;
+                                                          const documentBarcode = fullDocument?.content.barcode;
+                                                          
+                                                          return (
+                                                            <Card key={document.id} className="overflow-hidden">
+                                                              <CardHeader className="p-4 pb-2">
+                                                                <CardTitle className="text-base">{document.title}</CardTitle>
+                                                                <CardDescription>
+                                                                  {new Date(document.createdAt).toLocaleDateString('ru-RU')}
+                                                                </CardDescription>
+                                                              </CardHeader>
+                                                              
+                                                              <CardContent className="p-4 pt-2">
+                                                                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                                                  {document.description}
+                                                                </p>
+                                                                
+                                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                                  {hasAttachments && (
+                                                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                                                      <FileText className="h-3 w-3 mr-1" /> 
+                                                                      Файлы: {fullDocument!.content.attachments!.length}
+                                                                    </span>
+                                                                  )}
+                                                                  
+                                                                  {documentBarcode && (
+                                                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700">
+                                                                      <Barcode className="h-3 w-3 mr-1" /> {documentBarcode}
+                                                                    </span>
+                                                                  )}
+                                                                </div>
+                                                              </CardContent>
+                                                              
+                                                              <CardFooter className="p-4 pt-0 flex justify-between gap-2">
+                                                                <Button 
+                                                                  variant="outline"
+                                                                  size="sm"
+                                                                  className="w-full sm:w-auto"
+                                                                  asChild
+                                                                >
+                                                                  <a href={`/view/${fund.id}/${inventory.id}/${archiveCase.id}?documentId=${document.id}`} target="_blank">
+                                                                    Просмотреть
+                                                                  </a>
+                                                                </Button>
+                                                                
+                                                                <div className="flex gap-2">
+                                                                  {canEdit && (
+                                                                    <Button 
+                                                                      variant="outline"
+                                                                      size="sm"
+                                                                      onClick={() => openEditDialog(document)}
+                                                                    >
+                                                                      Редактировать
+                                                                    </Button>
+                                                                  )}
+                                                                  
+                                                                  {canDelete && (
+                                                                    <Button 
+                                                                      variant="destructive"
+                                                                      size="sm" 
+                                                                      onClick={() => handleDeleteDocument(document.id)}
+                                                                    >
+                                                                      Удалить
+                                                                    </Button>
+                                                                  )}
+                                                                </div>
+                                                              </CardFooter>
+                                                            </Card>
+                                                          );
+                                                        })}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </TableCell>
+                                              </TableRow>
+                                            )}
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </div>
                               )}
                             </CardContent>
                           </Card>
@@ -697,7 +1142,7 @@ const ArchiveManagement: React.FC = () => {
             
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <label htmlFor="edit-fund-name">Название фонда</label>
+                <Label htmlFor="edit-fund-name">Название фонда</Label>
                 <Input
                   id="edit-fund-name"
                   value={editingFund.name}
@@ -707,7 +1152,7 @@ const ArchiveManagement: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <label htmlFor="edit-fund-number">Номер фонда</label>
+                <Label htmlFor="edit-fund-number">Номер фонда</Label>
                 <Input
                   id="edit-fund-number"
                   value={editingFund.number}
@@ -718,7 +1163,7 @@ const ArchiveManagement: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <label htmlFor="edit-start-year">Начальный год</label>
+                  <Label htmlFor="edit-start-year">Начальный год</Label>
                   <Input
                     id="edit-start-year"
                     value={editingFund.startYear}
@@ -728,7 +1173,7 @@ const ArchiveManagement: React.FC = () => {
                 </div>
                 
                 <div className="grid gap-2">
-                  <label htmlFor="edit-end-year">Конечный год</label>
+                  <Label htmlFor="edit-end-year">Конечный год</Label>
                   <Input
                     id="edit-end-year"
                     value={editingFund.endYear}
@@ -739,7 +1184,7 @@ const ArchiveManagement: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <label htmlFor="edit-fund-description">Описание</label>
+                <Label htmlFor="edit-fund-description">Описание</Label>
                 <Textarea
                   id="edit-fund-description"
                   value={editingFund.description}
@@ -771,7 +1216,7 @@ const ArchiveManagement: React.FC = () => {
             
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <label htmlFor="edit-inventory-title">Название описи</label>
+                <Label htmlFor="edit-inventory-title">Название описи</Label>
                 <Input
                   id="edit-inventory-title"
                   value={editingInventory.title}
@@ -781,7 +1226,7 @@ const ArchiveManagement: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <label htmlFor="edit-inventory-number">Номер описи</label>
+                <Label htmlFor="edit-inventory-number">Номер описи</Label>
                 <Input
                   id="edit-inventory-number"
                   value={editingInventory.number}
@@ -791,7 +1236,7 @@ const ArchiveManagement: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <label htmlFor="edit-inventory-description">Описание</label>
+                <Label htmlFor="edit-inventory-description">Описание</Label>
                 <Textarea
                   id="edit-inventory-description"
                   value={editingInventory.description}
@@ -823,7 +1268,7 @@ const ArchiveManagement: React.FC = () => {
             
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <label htmlFor="edit-case-title">Название дела</label>
+                <Label htmlFor="edit-case-title">Название дела</Label>
                 <Input
                   id="edit-case-title"
                   value={editingCase.title}
@@ -833,7 +1278,7 @@ const ArchiveManagement: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <label htmlFor="edit-case-number">Номер дела</label>
+                <Label htmlFor="edit-case-number">Номер дела</Label>
                 <Input
                   id="edit-case-number"
                   value={editingCase.number}
@@ -843,7 +1288,7 @@ const ArchiveManagement: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <label htmlFor="edit-case-year">Год</label>
+                <Label htmlFor="edit-case-year">Год</Label>
                 <Input
                   id="edit-case-year"
                   value={editingCase.year}
@@ -853,7 +1298,7 @@ const ArchiveManagement: React.FC = () => {
               </div>
               
               <div className="grid gap-2">
-                <label htmlFor="edit-case-description">Описание</label>
+                <Label htmlFor="edit-case-description">Описание</Label>
                 <Textarea
                   id="edit-case-description"
                   value={editingCase.description}
@@ -871,6 +1316,223 @@ const ArchiveManagement: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Create Document Dialog */}
+      <Dialog open={isCreateDocDialogOpen} onOpenChange={setIsCreateDocDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Создать новый документ</DialogTitle>
+            <DialogDescription>
+              {selectedCaseForDoc && `Создание документа для дела: ${selectedCaseForDoc.caseTitle}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Название документа</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Название документа"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Описание</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Краткое описание документа"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="barcode" className="flex items-center gap-1">
+                  <Barcode className="h-4 w-4" />
+                  Штрихкод (необязательно)
+                </Label>
+              </div>
+              <Input
+                id="barcode"
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                placeholder="Введите код/номер документа"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="content">Содержание документа</Label>
+              <Textarea
+                id="content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Текст документа"
+                className="min-h-[200px]"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Прикрепленные файлы (необязательно)</Label>
+              <div className="flex flex-wrap gap-3 mt-2">
+                {attachments.map((attachment, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-gray-50">
+                    <FileText className="h-4 w-4 text-archive-navy" />
+                    <span className="text-sm truncate max-w-[180px]">{attachment.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(index)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={(e) => handleAttachmentUpload(e)}
+                  multiple
+                  className="hidden"
+                />
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-10"
+                >
+                  Добавить файлы
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Поддерживаемые форматы: изображения (JPEG, PNG), PDF, документы Word
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => {
+              setIsCreateDocDialogOpen(false);
+              resetDocumentForm();
+            }}>
+              Отмена
+            </Button>
+            <Button onClick={handleCreateDocument}>
+              Создать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Document Dialog */}
+      <Dialog open={isEditDocDialogOpen} onOpenChange={setIsEditDocDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактировать документ</DialogTitle>
+            <DialogDescription>
+              Внесение изменений в документ
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Название документа</Label>
+              <Input
+                id="edit-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Описание</Label>
+              <Textarea
+                id="edit-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="edit-barcode" className="flex items-center gap-1">
+                  <Barcode className="h-4 w-4" />
+                  Штрихкод (необязательно)
+                </Label>
+              </div>
+              <Input
+                id="edit-barcode"
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                placeholder="Введите код/номер документа"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-content">Содержание документа</Label>
+              <Textarea
+                id="edit-content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="min-h-[200px]"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Прикрепленные файлы</Label>
+              <div className="flex flex-wrap gap-3 mt-2">
+                {attachments.map((attachment, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-gray-50">
+                    <FileText className="h-4 w-4 text-archive-navy" />
+                    <span className="text-sm truncate max-w-[180px]">{attachment.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(index)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                <input
+                  type="file"
+                  ref={editFileInputRef}
+                  onChange={(e) => handleAttachmentUpload(e, true)}
+                  multiple
+                  className="hidden"
+                />
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={() => editFileInputRef.current?.click()}
+                  className="h-10"
+                >
+                  Добавить файлы
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Поддерживаемые форматы: изображения (JPEG, PNG), PDF, документы Word
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => {
+              setIsEditDocDialogOpen(false);
+              resetDocumentForm();
+            }}>
+              Отмена
+            </Button>
+            <Button onClick={handleUpdateDocument}>
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

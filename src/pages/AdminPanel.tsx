@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import UserManagement from '@/components/UserManagement';
-import DocumentManagement from '@/components/DocumentManagement';
 import ArchiveManagement from '@/components/ArchiveManagement';
 import { ArchiveProvider } from '@/contexts/ArchiveContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,7 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const AdminPanel = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('archive');
   const isMobile = useIsMobile();
   
   // Redirect if not authenticated or not owner/admin
@@ -55,30 +54,21 @@ const AdminPanel = () => {
                 <CardContent className={`p-4 md:p-6 ${isMobile ? 'overflow-x-auto' : ''}`}>
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className={`mb-6 ${isMobile ? 'w-full flex-wrap' : ''}`}>
+                      <TabsTrigger value="archive">Управление архивом</TabsTrigger>
                       {(user?.role === 'owner' || user?.role === 'admin') && (
                         <TabsTrigger value="users">Управление пользователями</TabsTrigger>
                       )}
-                      {(user?.role === 'owner' || user?.role === 'admin') && (
-                        <TabsTrigger value="archive">Управление архивом</TabsTrigger>
-                      )}
-                      <TabsTrigger value="documents">Управление документами</TabsTrigger>
                     </TabsList>
+                    
+                    <TabsContent value="archive" className="space-y-6">
+                      <ArchiveManagement />
+                    </TabsContent>
                     
                     {(user?.role === 'owner' || user?.role === 'admin') && (
                       <TabsContent value="users" className="space-y-6">
                         <UserManagement />
                       </TabsContent>
                     )}
-                    
-                    {(user?.role === 'owner' || user?.role === 'admin') && (
-                      <TabsContent value="archive" className="space-y-6">
-                        <ArchiveManagement />
-                      </TabsContent>
-                    )}
-                    
-                    <TabsContent value="documents" className="space-y-6">
-                      <DocumentManagement />
-                    </TabsContent>
                   </Tabs>
                 </CardContent>
               </Card>
