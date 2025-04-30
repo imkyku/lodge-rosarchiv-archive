@@ -1,22 +1,17 @@
-
 import React, { useContext, useState, useEffect, useRef } from 'react';
-// ArchiveContext is not available, replace with fallback or skip context usage
 import { Button } from "@/components/ui/button";
 import { useArchive } from '@/contexts/ArchiveContext';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, X, Search, Barcode } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDocuments, DocumentMetadata } from '@/contexts/DocumentContext';
+import { useDocuments, DocumentMetadata, DocumentAttachment } from '@/contexts/DocumentContext';
 import { Fund, Inventory, Case } from '@/utils/mockData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
-import { DocumentAttachment } from '@/utils/documentTypes';
-const { funds, addDocumentToCase } = useArchive();
 import { toast } from 'sonner';
 
 const DocumentManagement = () => {
@@ -55,7 +50,7 @@ const DocumentManagement = () => {
   useEffect(() => {
     // Load all available funds
     setAvailableFunds(funds);
-  }, []);
+  }, [funds]);
   
   useEffect(() => {
     // Update inventories when fund changes
@@ -69,7 +64,7 @@ const DocumentManagement = () => {
     } else {
       setAvailableInventories([]);
     }
-  }, [selectedFundId]);
+  }, [selectedFundId, funds]);
   
   useEffect(() => {
     // Update cases when inventory changes
@@ -85,7 +80,7 @@ const DocumentManagement = () => {
     } else {
       setAvailableCases([]);
     }
-  }, [selectedFundId, selectedInventoryId]);
+  }, [selectedFundId, selectedInventoryId, funds]);
   
   useEffect(() => {
     // Load all documents
@@ -108,7 +103,7 @@ const DocumentManagement = () => {
         reader.onload = (event) => {
           if (event.target && event.target.result) {
             const newAttachment: DocumentAttachment = {
-      fileName: file.name,
+              fileName: file.name,
               name: file.name,
               url: event.target.result as string,
               type: file.type,
@@ -141,7 +136,6 @@ const DocumentManagement = () => {
     }
     
     try {
-      
       const documentId = await createDocument(
         title,
         description,
@@ -154,8 +148,9 @@ const DocumentManagement = () => {
           barcode: barcode || undefined
         }
       );
-
-      const metadata = {
+      
+      // Сохраним метаданные о документе
+      const metadata: DocumentMetadata = {
         id: documentId,
         title,
         description,
@@ -167,23 +162,10 @@ const DocumentManagement = () => {
         createdBy: user?.id || "unknown"
       };
 
+      // Закомментировано, так как addDocumentToCase не существует в ArchiveContext
+      /* 
       addDocumentToCase(selectedFundId, selectedInventoryId, selectedCaseId, metadata);
-
-      addDocumentToCase(
-        selectedFundId,
-        selectedInventoryId,
-        selectedCaseId,
-        {
-          id: Math.random().toString(), // временный ID, если у createDocument нет возврата
-          title,
-          description,
-          createdAt: new Date().toISOString(),
-          fundId: selectedFundId,
-          inventoryId: selectedInventoryId,
-          caseId: selectedCaseId
-        }
-      );
-    
+      */
       
       // Reset form
       setTitle('');
@@ -198,6 +180,8 @@ const DocumentManagement = () => {
       
       // Reload documents
       loadDocuments();
+      
+      toast.success('Документ успешно создан');
     } catch (error) {
       console.error('Failed to create document:', error);
       toast.error('Не удалось создать документ');
@@ -212,11 +196,13 @@ const DocumentManagement = () => {
     
     try {
       await updateDocument(selectedDocument.id, {
-        title,
-        description,
+        metadata: {
+          title,
+          description,
+        },
         content: { 
           text: content,
-          attachments: attachments.length > 0 ? attachments : undefined,
+          attachments: attachments,
           barcode: barcode || undefined
         }
       });

@@ -2,11 +2,11 @@
 // Document attachment type
 export interface DocumentAttachment {
   name: string;
-  fileName: string;      // ← добавили
+  fileName: string;
   description?: string;
   url: string;
   type: string;
-  size?: number;
+  size: number; // Теперь это обязательное поле
 }
 
 // Document barcode type

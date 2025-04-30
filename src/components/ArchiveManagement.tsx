@@ -1,10 +1,8 @@
-
 type Fund = {
   id: string;
   title: string;
   number: string;
 };
-
 
 import React, { useState } from 'react';
 import { useArchive } from '@/contexts/ArchiveContext';
@@ -42,10 +40,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAuth } from '@/contexts/AuthContext';
+import { DocumentMetadata } from '@/contexts/DocumentContext';
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
 
 const ArchiveManagement: React.FC = () => {
-  const { funds, createFund, updateFund, deleteFund, createInventory, updateInventory, deleteInventory, createCase, updateCase, deleteCase } = useArchive();
+  const { funds, createFund, updateFund, deleteFund, createInventory, updateInventory, deleteInventory, createCase, updateCase, deleteCase, addDocumentToCase } = useArchive();
   const { hasPermission } = useAuth();
   
   // Fund states
@@ -257,22 +256,7 @@ const ArchiveManagement: React.FC = () => {
   const canEdit = hasPermission('editDocument');
   const canDelete = hasPermission('deleteDocument');
 
-  
-  const addDocumentToCase = (fundId: string, inventoryId: string, caseId: string, document: DocumentMetadata) => {
-    setArchive(prev => {
-      const updated = { ...prev };
-      const fund = updated.funds.find(f => f.id === fundId);
-      if (!fund) return prev;
-      const inventory = fund.inventories.find(i => i.id === inventoryId);
-      if (!inventory) return prev;
-      const targetCase = inventory.cases.find(c => c.id === caseId);
-      if (!targetCase) return prev;
-      targetCase.documents = targetCase.documents || [];
-      targetCase.documents.push(document);
-      return updated;
-    });
-  };
-return (
+  return (
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

@@ -48,6 +48,11 @@ const Dashboard = () => {
     }
   }, [currentFund, selectedInventoryId]);
 
+  const handleSearch = (query: string) => {
+    // Реализация поиска документов
+    console.log('Searching for:', query);
+  };
+
   return (
     <div>
       <Navbar />
@@ -67,11 +72,17 @@ const Dashboard = () => {
                 selectedInventoryId={selectedInventoryId}
               />
             )}
-            {currentInventory && <CasesList cases={currentCases} />}
+            {currentInventory && (
+              <CasesList 
+                cases={currentCases} 
+                fundId={selectedFundId || ''} 
+                inventoryId={selectedInventoryId || ''} 
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="search">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <SearchBar onSearch={handleSearch} placeholder="Поиск документов..." />
             {/* Здесь можно отобразить результаты поиска */}
           </TabsContent>
         </Tabs>
