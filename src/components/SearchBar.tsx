@@ -18,9 +18,7 @@ const SearchBar = ({ onSearch, placeholder = 'Поиск документов...
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      onSearch(query.trim());
-    }
+    onSearch(query.trim());
   };
 
   return (

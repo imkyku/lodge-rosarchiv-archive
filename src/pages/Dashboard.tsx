@@ -10,7 +10,6 @@ import SearchBar from '@/components/SearchBar';
 import FundsList from '@/components/FundsList';
 import InventoryList from '@/components/InventoryList';
 import CasesList from '@/components/CasesList';
-import { DocumentViewer } from '@/components/DocumentViewer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ import { FileText, Barcode } from 'lucide-react';
 const Dashboard = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const { funds } = useArchive();
-  const { getDocumentsByCaseId } = useDocuments();
+  const { getDocumentsByCaseId, searchDocuments } = useDocuments();
   const navigate = useNavigate();
 
   const [selectedFundId, setSelectedFundId] = useState<string | undefined>(undefined);
@@ -30,6 +29,7 @@ const Dashboard = () => {
   const [currentCases, setCurrentCases] = useState<any[]>([]);
   const [currentDocuments, setCurrentDocuments] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('browse');
 
   useEffect(() => {
@@ -70,9 +70,38 @@ const Dashboard = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Implement search logic
-    console.log('Searching for:', query);
+    if (query.trim()) {
+      const results = searchDocuments(query);
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
   };
+
+  const renderDocumentCard = (doc: any) => (
+    <Card key={doc.id} className="overflow-hidden">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-base">{doc.title}</CardTitle>
+        <CardDescription className="text-xs">
+          {new Date(doc.createdAt).toLocaleDateString('ru-RU')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <p className="text-sm mb-3 line-clamp-2">{doc.description}</p>
+        <div className="flex justify-end">
+          <Button 
+            asChild 
+            size="sm" 
+            variant="outline"
+          >
+            <a href={`/view/${doc.fundId}/${doc.inventoryId}/${doc.caseId}?documentId=${doc.id}`}>
+              Просмотреть
+            </a>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div>
@@ -124,30 +153,7 @@ const Dashboard = () => {
                       {currentDocuments.length > 0 && (
                         <CardContent>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {currentDocuments.map((doc) => (
-                              <Card key={doc.id} className="overflow-hidden">
-                                <CardHeader className="p-4 pb-2">
-                                  <CardTitle className="text-base">{doc.title}</CardTitle>
-                                  <CardDescription className="text-xs">
-                                    {new Date(doc.createdAt).toLocaleDateString('ru-RU')}
-                                  </CardDescription>
-                                </CardHeader>
-                                <CardContent className="p-4 pt-0">
-                                  <p className="text-sm mb-3 line-clamp-2">{doc.description}</p>
-                                  <div className="flex justify-end">
-                                    <Button 
-                                      asChild 
-                                      size="sm" 
-                                      variant="outline"
-                                    >
-                                      <a href={`/view/${selectedFundId}/${selectedInventoryId}/${selectedCaseId}?documentId=${doc.id}`}>
-                                        Просмотреть
-                                      </a>
-                                    </Button>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
+                            {currentDocuments.map(doc => renderDocumentCard(doc))}
                           </div>
                         </CardContent>
                       )}
@@ -161,9 +167,26 @@ const Dashboard = () => {
           <TabsContent value="search">
             <div className="mt-4">
               <SearchBar onSearch={handleSearch} placeholder="Поиск документов..." />
+              
               {searchQuery && (
                 <div className="mt-6">
-                  <p className="text-center py-6 text-muted-foreground">Реализация поиска документов в разработке...</p>
+                  {searchResults.length > 0 ? (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Результаты поиска</CardTitle>
+                        <CardDescription>
+                          Найдено документов: {searchResults.length}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {searchResults.map(doc => renderDocumentCard(doc))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <p className="text-center py-6 text-muted-foreground">По запросу "{searchQuery}" ничего не найдено</p>
+                  )}
                 </div>
               )}
             </div>

@@ -20,6 +20,14 @@ const ViewDocument = () => {
   const [fundName, setFundName] = useState<string>('');
   const [inventoryName, setInventoryName] = useState<string>('');
   const [caseName, setCaseName] = useState<string>('');
+  const [document, setDocument] = useState<any>(null);
+
+  useEffect(() => {
+    if (documentId) {
+      const foundDocument = getDocumentById(documentId);
+      setDocument(foundDocument);
+    }
+  }, [documentId, getDocumentById]);
 
   useEffect(() => {
     if (fundId) {
@@ -43,8 +51,6 @@ const ViewDocument = () => {
       }
     }
   }, [fundId, inventoryId, caseId, funds]);
-
-  const document = documentId ? getDocumentById(documentId) : null;
 
   if (!fundId || !inventoryId || !caseId || !documentId) {
     return (

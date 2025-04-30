@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DocumentAttachment as DocumentAttachmentType, DocumentContent } from '../utils/documentTypes';
 
 // Export the DocumentAttachment type using the type from documentTypes.ts
@@ -37,12 +37,33 @@ type DocumentContextType = {
   ) => Promise<string>;
   updateDocument: (id: string, update: Partial<FullDocument>) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
+  searchDocuments: (query: string) => DocumentMetadata[];
 };
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
 
+// Storage key for documents
+const DOCUMENTS_KEY = 'archiveDocuments';
+
 export const DocumentProvider = ({ children }: { children: ReactNode }) => {
   const [documents, setDocuments] = useState<FullDocument[]>([]);
+
+  // Load documents from localStorage on initial render
+  useEffect(() => {
+    const storedDocuments = localStorage.getItem(DOCUMENTS_KEY);
+    if (storedDocuments) {
+      try {
+        setDocuments(JSON.parse(storedDocuments));
+      } catch (error) {
+        console.error('Failed to parse stored documents:', error);
+      }
+    }
+  }, []);
+
+  // Save documents to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
+  }, [documents]);
 
   const getDocuments = () => documents.map(d => d.metadata);
   
@@ -101,6 +122,24 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
   const deleteDocument = async (id: string) => {
     setDocuments(prev => prev.filter(doc => doc.metadata.id !== id));
   };
+  
+  // New search function
+  const searchDocuments = (query: string) => {
+    if (!query?.trim()) return [];
+    
+    const normalizedQuery = query.toLowerCase().trim();
+    
+    return documents.filter(doc => {
+      const { title, description } = doc.metadata;
+      const { text } = doc.content;
+      
+      return (
+        title.toLowerCase().includes(normalizedQuery) ||
+        description.toLowerCase().includes(normalizedQuery) ||
+        (text && text.toLowerCase().includes(normalizedQuery))
+      );
+    }).map(d => d.metadata);
+  };
 
   return (
     <DocumentContext.Provider
@@ -111,7 +150,8 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
         getDocumentById, 
         createDocument, 
         updateDocument, 
-        deleteDocument 
+        deleteDocument,
+        searchDocuments
       }}
     >
       {children}
