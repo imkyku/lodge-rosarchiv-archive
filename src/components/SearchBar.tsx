@@ -7,10 +7,11 @@ import { Search } from 'lucide-react';
 interface SearchBarProps {
   onSearch: (query: string) => void;
   placeholder?: string;
+  defaultValue?: string;
 }
 
-const SearchBar = ({ onSearch, placeholder = 'Поиск документов...' }: SearchBarProps) => {
-  const [query, setQuery] = useState('');
+const SearchBar = ({ onSearch, placeholder = 'Поиск документов...', defaultValue = '' }: SearchBarProps) => {
+  const [query, setQuery] = useState(defaultValue);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);

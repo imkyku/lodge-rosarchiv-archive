@@ -21,11 +21,20 @@ const ViewDocument = () => {
   const [inventoryName, setInventoryName] = useState<string>('');
   const [caseName, setCaseName] = useState<string>('');
   const [document, setDocument] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (documentId) {
-      const foundDocument = getDocumentById(documentId);
-      setDocument(foundDocument);
+      // Добавим небольшую задержку для убеждения, что документ точно загружен
+      const timer = setTimeout(() => {
+        const foundDocument = getDocumentById(documentId);
+        setDocument(foundDocument);
+        setLoading(false);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setLoading(false);
     }
   }, [documentId, getDocumentById]);
 
@@ -51,6 +60,18 @@ const ViewDocument = () => {
       }
     }
   }, [fundId, inventoryId, caseId, funds]);
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main className="container mx-auto p-4 min-h-[calc(100vh-200px)] flex flex-col items-center justify-center">
+          <p>Загрузка документа...</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!fundId || !inventoryId || !caseId || !documentId) {
     return (
