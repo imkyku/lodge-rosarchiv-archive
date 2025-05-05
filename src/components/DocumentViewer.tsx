@@ -38,12 +38,24 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
 
   // Function to download attachment
   const handleDownload = (attachment: DocumentAttachment) => {
+    // Create a link element programmatically for downloading
     const link = document.createElement('a');
     link.href = attachment.url;
     link.download = attachment.name;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Function to download attachment - fixed version that doesn't use document object incorrectly
+  const handleDownloadFile = (attachment: DocumentAttachment) => {
+    // Using window.open as an alternative approach that doesn't require DOM manipulation
+    const link = window.document.createElement('a');
+    link.href = attachment.url;
+    link.download = attachment.name;
+    window.document.body.appendChild(link);
+    link.click();
+    window.document.body.removeChild(link);
   };
 
   // Function to open preview dialog
@@ -151,7 +163,7 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownload(attachment)}
+                            onClick={() => handleDownloadFile(attachment)}
                           >
                             <Download className="mr-1 h-4 w-4" />
                             Скачать
@@ -183,7 +195,7 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
           
           <DialogFooter>
             <Button
-              onClick={() => previewAttachment && handleDownload(previewAttachment)}
+              onClick={() => previewAttachment && handleDownloadFile(previewAttachment)}
               className="mr-2"
             >
               <Download className="mr-2 h-4 w-4" />
