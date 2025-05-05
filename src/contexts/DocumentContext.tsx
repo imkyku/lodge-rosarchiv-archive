@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DocumentAttachment as DocumentAttachmentType, DocumentContent } from '../utils/documentTypes';
 
@@ -38,6 +37,7 @@ type DocumentContextType = {
   updateDocument: (id: string, update: Partial<FullDocument>) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
   searchDocuments: (query: string) => DocumentMetadata[];
+  searchDocumentsByBarcode: (barcode: string) => DocumentMetadata[];
 };
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
@@ -123,7 +123,7 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
     setDocuments(prev => prev.filter(doc => doc.metadata.id !== id));
   };
   
-  // New search function
+  // Existing search function
   const searchDocuments = (query: string) => {
     if (!query?.trim()) return [];
     
@@ -140,6 +140,16 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
       );
     }).map(d => d.metadata);
   };
+  
+  // New search by barcode function
+  const searchDocumentsByBarcode = (barcode: string) => {
+    if (!barcode?.trim()) return [];
+    
+    return documents.filter(doc => {
+      const { barcode: docBarcode } = doc.content;
+      return docBarcode === barcode;
+    }).map(d => d.metadata);
+  };
 
   return (
     <DocumentContext.Provider
@@ -151,7 +161,8 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
         createDocument, 
         updateDocument, 
         deleteDocument,
-        searchDocuments
+        searchDocuments,
+        searchDocumentsByBarcode
       }}
     >
       {children}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,12 +13,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { FileText, Barcode } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const { funds } = useArchive();
-  const { getDocumentsByCaseId, searchDocuments } = useDocuments();
+  const { getDocumentsByCaseId, searchDocuments, searchDocumentsByBarcode } = useDocuments();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [selectedFundId, setSelectedFundId] = useState<string | undefined>(undefined);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string | undefined>(undefined);
@@ -73,6 +74,43 @@ const Dashboard = () => {
     if (query.trim()) {
       const results = searchDocuments(query);
       setSearchResults(results);
+      if (results.length === 0) {
+        toast({
+          title: "Поиск",
+          description: `По запросу "${query}" ничего не найдено`,
+          variant: "default"
+        });
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleBarcodeSearch = (barcode: string) => {
+    setSearchQuery(`Штрихкод: ${barcode}`);
+    if (barcode.trim()) {
+      const results = searchDocumentsByBarcode(barcode);
+      setSearchResults(results);
+      
+      if (results.length === 0) {
+        toast({
+          title: "Поиск по штрихкоду",
+          description: `Документ со штрихкодом "${barcode}" не найден`,
+          variant: "default"
+        });
+      } else if (results.length === 1) {
+        toast({
+          title: "Поиск по штрихкоду",
+          description: `Найден документ со штрихкодом "${barcode}"`,
+          variant: "success"
+        });
+      } else {
+        toast({
+          title: "Поиск по штрихкоду",
+          description: `Найдено ${results.length} документов со штрихкодом "${barcode}"`,
+          variant: "success"
+        });
+      }
     } else {
       setSearchResults([]);
     }
@@ -166,7 +204,11 @@ const Dashboard = () => {
 
           <TabsContent value="search">
             <div className="mt-4">
-              <SearchBar onSearch={handleSearch} placeholder="Поиск документов..." />
+              <SearchBar 
+                onSearch={handleSearch} 
+                onBarcodeSearch={handleBarcodeSearch}
+                placeholder="Поиск документов..." 
+              />
               
               {searchQuery && (
                 <div className="mt-6">
