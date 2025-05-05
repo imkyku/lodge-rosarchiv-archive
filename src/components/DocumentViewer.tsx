@@ -25,10 +25,10 @@ type DocumentViewerProps = {
 export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
   const { getDocumentById } = useDocuments();
   const isMobile = useIsMobile();
-  const document = getDocumentById(documentId);
+  const currentDocument = getDocumentById(documentId);
   const [previewAttachment, setPreviewAttachment] = useState<DocumentAttachment | null>(null);
   
-  if (!document) {
+  if (!currentDocument) {
     return (
       <div className="p-8 text-center">
         <p className="text-lg text-gray-500">Документ не найден</p>
@@ -39,17 +39,6 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
   // Function to download attachment
   const handleDownload = (attachment: DocumentAttachment) => {
     // Create a link element programmatically for downloading
-    const link = document.createElement('a');
-    link.href = attachment.url;
-    link.download = attachment.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // Function to download attachment - fixed version that doesn't use document object incorrectly
-  const handleDownloadFile = (attachment: DocumentAttachment) => {
-    // Using window.open as an alternative approach that doesn't require DOM manipulation
     const link = window.document.createElement('a');
     link.href = attachment.url;
     link.download = attachment.name;
@@ -110,25 +99,25 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
     }
   };
 
-  const hasAttachments = document.content.attachments && document.content.attachments.length > 0;
+  const hasAttachments = currentDocument.content.attachments && currentDocument.content.attachments.length > 0;
 
   return (
     <>
       <Card className="w-full shadow-md">
         <CardHeader>
-          <CardTitle>{document.metadata.title}</CardTitle>
+          <CardTitle>{currentDocument.metadata.title}</CardTitle>
           <CardDescription>
-            {document.content.barcode && (
+            {currentDocument.content.barcode && (
               <span className="inline-block bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-medium mr-2">
-                Штрихкод: {document.content.barcode}
+                Штрихкод: {currentDocument.content.barcode}
               </span>
             )}
-            <span>Создан: {new Date(document.metadata.createdAt).toLocaleDateString('ru-RU')}</span>
+            <span>Создан: {new Date(currentDocument.metadata.createdAt).toLocaleDateString('ru-RU')}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">{document.metadata.description}</p>
+            <p className="text-sm text-gray-600">{currentDocument.metadata.description}</p>
             <Separator />
             
             <Tabs defaultValue="content">
@@ -141,14 +130,14 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
               
               <TabsContent value="content" className="mt-4">
                 <div className="whitespace-pre-wrap">
-                  {document.content.text}
+                  {currentDocument.content.text}
                 </div>
               </TabsContent>
               
               {hasAttachments && (
                 <TabsContent value="attachments" className="mt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {document.content.attachments?.map((attachment, idx) => (
+                    {currentDocument.content.attachments?.map((attachment, idx) => (
                       <div key={idx} className="border rounded-md p-4 flex flex-col items-center">
                         {renderAttachmentPreview(attachment)}
                         <div className="mt-2 flex gap-2 justify-center">
@@ -163,7 +152,7 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownloadFile(attachment)}
+                            onClick={() => handleDownload(attachment)}
                           >
                             <Download className="mr-1 h-4 w-4" />
                             Скачать
@@ -195,7 +184,7 @@ export const DocumentViewer = ({ documentId }: DocumentViewerProps) => {
           
           <DialogFooter>
             <Button
-              onClick={() => previewAttachment && handleDownloadFile(previewAttachment)}
+              onClick={() => previewAttachment && handleDownload(previewAttachment)}
               className="mr-2"
             >
               <Download className="mr-2 h-4 w-4" />
