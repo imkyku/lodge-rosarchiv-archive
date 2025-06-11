@@ -1,123 +1,58 @@
 
-import { useState, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import { useNavigate } from 'react-router-dom';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+const Login: React.FC = () => {
+  const { login, isLoading } = useAuth();
+  const [id, setId] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
     try {
-      await login(email, password);
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        variant: "destructive",
-        title: "Ошибка входа",
-        description: "Проверьте введенные данные и попробуйте снова",
-      });
-    } finally {
-      setLoading(false);
+      await login(id.trim(), name.trim());
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Ошибка авторизации');
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-archive-cream">
-        <div className="w-full max-w-md">
-          <Card className="paper-bg shadow-lg document-border">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-playfair text-archive-navy">
-                Вход в архив
-              </CardTitle>
-              <CardDescription>
-                Введите свои учетные данные для доступа к архивным материалам
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Пароль</Label>
-                    <Link 
-                      to="#" 
-                      className="text-sm text-archive-navy/70 hover:text-archive-navy"
-                    >
-                      Забыли пароль?
-                    </Link>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-archive-navy hover:bg-archive-navy/80"
-                  disabled={loading}
-                >
-                  {loading ? 'Выполняется вход...' : 'Войти'}
-                </Button>
-              </form>
-              
-              <div className="mt-6 text-center">
-                <p className="text-sm">
-                  Нет учетной записи?{' '}
-                  <Link 
-                    to="/register" 
-                    className="text-archive-navy font-semibold hover:underline"
-                  >
-                    Зарегистрироваться
-                  </Link>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="mt-6 text-center text-sm">
-            <p className="text-archive-navy/70">
-              Для тестового входа используйте:<br />
-              Email: admin@example.com<br />
-              Пароль: password
-            </p>
-          </div>
+    <div className="flex items-center justify-center h-screen">
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md w-96 space-y-4">
+        <h2 className="text-2xl font-semibold text-center">Вход</h2>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        <div>
+          <label className="block text-sm font-medium mb-1">ID</label>
+          <input
+            type="text"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
+            required
+          />
         </div>
-      </main>
-      
-      <Footer />
+        <div>
+          <label className="block text-sm font-medium mb-1">ФИО</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Входим...' : 'Войти'}
+        </button>
+      </form>
     </div>
   );
 };
