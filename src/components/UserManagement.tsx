@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,47 +19,21 @@ const UserManagement = () => {
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState<UserRole>('reader');
   const [selectedUser, setSelectedUser] = useState<{id: string, name: string, email: string, role: UserRole} | null>(null);
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   
+  const users = getAllUsers();
   const isOwner = user?.role === 'owner';
   
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    if (getAllUsers) {
-      setLoading(true);
-      try {
-        const usersList = await getAllUsers();
-        setUsers(usersList);
-      } catch (error) {
-        console.error('Error loading users:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-  
   const handleCreateUser = async () => {
-    if (!newUserName || !newUserEmail || !newUserPassword || !createUser) return;
+    if (!newUserName || !newUserEmail || !newUserPassword) return;
     
-    try {
-      await createUser(newUserName, newUserEmail, newUserPassword, newUserRole);
-      
-      // Reset form
-      setNewUserName('');
-      setNewUserEmail('');
-      setNewUserPassword('');
-      setNewUserRole('reader');
-      setIsCreateDialogOpen(false);
-      
-      // Reload users
-      loadUsers();
-    } catch (error) {
-      console.error('Error creating user:', error);
-    }
+    await createUser(newUserName, newUserEmail, newUserPassword, newUserRole);
+    
+    // Reset form
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserPassword('');
+    setNewUserRole('reader');
+    setIsCreateDialogOpen(false);
   };
   
   const handleUpdateRole = async () => {
@@ -84,10 +59,6 @@ const UserManagement = () => {
   // Only owners and admins can access this component
   if (!hasPermission('manageUsers')) {
     return null;
-  }
-
-  if (loading) {
-    return <div className="text-center">Загрузка пользователей...</div>;
   }
 
   return (
@@ -256,5 +227,3 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
-
-}

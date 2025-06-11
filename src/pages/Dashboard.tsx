@@ -102,13 +102,13 @@ const Dashboard = () => {
         toast({
           title: "Поиск по штрихкоду",
           description: `Найден документ со штрихкодом "${barcode}"`,
-          variant: "default"
+          variant: "success"
         });
       } else {
         toast({
           title: "Поиск по штрихкоду",
           description: `Найдено ${results.length} документов со штрихкодом "${barcode}"`,
-          variant: "default"
+          variant: "success"
         });
       }
     } else {
