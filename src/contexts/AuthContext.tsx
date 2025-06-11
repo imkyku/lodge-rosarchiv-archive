@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState } from 'react';
 
-export type UserRole = 'owner' | 'archivist' | 'reader';
+export type UserRole = 'owner' | 'admin' | 'archivist' | 'reader';
 
 interface User {
   id: string;
@@ -16,11 +15,11 @@ interface AuthContextType {
   login: (id: string, name: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: 'createDocument' | 'editDocument' | 'readDocument' | 'deleteDocument' | 'manageUsers') => boolean;
-  createUser?: (userData: any) => Promise<void>;
+  createUser?: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   updateUserRole?: (userId: string, role: UserRole) => Promise<void>;
   deleteUser?: (userId: string) => Promise<void>;
   getAllUsers?: () => Promise<any[]>;
-  register?: (id: string, name: string) => Promise<void>;
+  register?: (name: string, email: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -74,10 +73,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (id: string, name: string) => {
+  const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      await apiCall('auth/register', 'POST', { id, name });
+      await apiCall('auth/register', 'POST', { name, email, password });
     } catch (error) {
       console.error(error);
       throw error;
@@ -86,8 +85,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const createUser = async (userData: any) => {
-    await apiCall('users', 'POST', userData);
+  const createUser = async (name: string, email: string, password: string, role: UserRole) => {
+    await apiCall('users', 'POST', { name, email, password, role });
   };
 
   const updateUserRole = async (userId: string, role: UserRole) => {
@@ -110,6 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const hasPermission = (permission: 'createDocument' | 'editDocument' | 'readDocument' | 'deleteDocument' | 'manageUsers') => {
     if (!user) return false;
     if (user.role === 'owner') return true;
+    if (user.role === 'admin') return permission !== 'createDocument';
     if (user.role === 'archivist') return permission !== 'createDocument' && permission !== 'manageUsers';
     if (user.role === 'reader') return permission === 'readDocument';
     return false;
@@ -133,3 +133,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

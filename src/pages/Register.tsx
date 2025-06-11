@@ -35,8 +35,10 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await register(name, email, password);
-      navigate('/dashboard');
+      if (register) {
+        await register(name, email, password);
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       toast({
